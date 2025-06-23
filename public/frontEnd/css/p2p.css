@@ -1,0 +1,1581 @@
+.home-track-inner {
+    -webkit-box-shadow: 0 0 20px -8px rgb(27 30 26 / .45);
+    -ms-box-shadow: 0 0 20px -8px rgb(27 30 26 / .45);
+    box-shadow: 0 0 20px -8px rgb(27 30 26 / .45);
+    margin-top: -45px;
+    padding: 20px;
+    border-radius: 10px;
+    background: #fff;
+}
+.home-track-inner form button {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    right: 0;
+    border-radius: 0 4px 4px 0;
+    background: #AF251B;
+}
+.tracking_error {
+    padding: 15px;
+    font-weight: 500;
+    margin-top: 15px;
+    background: #ff2828;
+    text-align: center !important;
+    color: #fff !important;
+    border-radius: 4px;
+}
+.home-track-inner ul {
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-gap: 10px;
+}
+li {
+    list-style: none;
+}
+.home-track-inner ul li:nth-child(1) {
+    display: none;
+}
+.home-track-inner ul li a {
+    text-align: center;
+    border-radius: 4px;
+    border: 2px solid #602D90;
+    color: #602D90;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: block;
+    padding: 18px 15px 16px;
+}
+.home-track-inner form {
+    position: relative;
+}
+.home-track-inner form input {
+    padding: 15px 15px 15px 45px;
+    /* background: #fff url(../img/target.png) no-repeat 15px center; */
+}
+.common-btn, .contact-form .wpcf7-submit {
+    border: none;
+    letter-spacing: .35px;
+    font-weight: 600;
+    padding: 15px 35px;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    color: #fff;
+    display: inline-block;
+    line-height: 1;
+    background: #602D90;
+    text-transform: capitalize;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+}
+.home-track{
+    z-index: 999 !important;
+}
+
+/* p2p */
+
+
+.booking-page-link ul {
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid #E3E3E3;
+}
+li {
+    list-style: none;
+}
+.booking-page .shipping-form {
+    background: #F1F3F4;
+}
+.shipping-form {
+    position: relative;
+    z-index: 9;
+    background: #fff;
+    border-radius: 4px;
+    -webkit-box-shadow: 0 0 20px -10px rgb(27 30 26 / .15);
+    -ms-box-shadow: 0 0 20px -10px rgb(27 30 26 / .15);
+    box-shadow: 0 0 20px -10px rgb(27 30 26 / .15);
+    padding: 30px;
+}
+.payment-method {
+    background: #F1F3F4;
+}
+.boolean-check {
+    margin-bottom: 10px;
+}
+.shipping-form h2 {
+    color: #1B1E1A;
+    margin: 0 0 30px;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 30px;
+}
+
+.payment-method ul {
+    display: block;
+}
+.boolean-check ul {
+    padding: 0;
+    margin: 0;
+    display: flex;
+}
+.payment-method ul li:not(:last-child) {
+    margin-bottom: 15px;
+}
+.boolean-check ul li:not(:last-child) {
+    margin-right: 10px;
+}
+.payment-method ul li {
+    width: 100%;
+}
+.payment-method ul li label {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+}
+.boolean-check ul li label {
+    background: #fff;
+    border: 1px solid rgb(0 0 0 / .12);
+    padding: 10px 10px;
+    border-radius: 4px;
+    min-width: 80px;
+}
+.radio {
+    font-size: 14px;
+    font-weight: 500;
+}
+.radio, .checkbox {
+    display: block;
+    position: relative;
+    margin-bottom: 0;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.shipping-form .common-btn, .shipping-form .contact-form .wpcf7-submit, .contact-form .shipping-form .wpcf7-submit {
+    width: 100%;
+    border-radius: 4px;
+    background: #AF251B;
+    text-align: center;
+    color: #fff !important;
+}
+.payment-method .common-btn, .payment-method .contact-form .wpcf7-submit, .contact-form .payment-method .wpcf7-submit {
+    width: 100%;
+    text-align: center;
+    background: #AF251B;
+    margin-top: 200px;
+    color: #fff !important;
+}
+.shipping-form input.form-control, .shipping-form .contact-form input.wpcf7-form-control, .contact-form .shipping-form input.wpcf7-form-control, .shipping-form .contact-form input.wpcf7-textarea, .contact-form .shipping-form input.wpcf7-textarea, .shipping-form .select-style {
+    background-color: #fff;
+}
+.step-nav {
+    margin-bottom: 30px;
+}
+.step-nav ul {
+    padding: 0;
+    margin: 0;
+    counter-reset: step;
+    display: flex;
+    justify-content: center;
+}
+.step-nav ul li.active {
+    color: #1B1E1A;
+    font-weight: 500;
+    pointer-events: initial;
+}
+
+
+.step-nav ul li.active:before {
+    color: #602D90;
+}
+
+.step-nav ul li.active:before {
+    color: #602D90;
+}
+.step-nav ul li:before {
+    font-family: "ecourier", FontAwesome, sans-serif;
+    width: 30px;
+    height: 30px;
+    content: "\f111";
+    line-height: 30px;
+    background: #F1F3F4;
+    display: block;
+    margin: 0 auto 10px;
+    border-radius: 50%;
+    color: #D8D8D8;
+}
+
+.animate, .footer p a, .footer .blog-details a, .footer .job-details a, .footer-nav ul li a, .footer-social li a, .career-job-list ul li a span, .price-nav ul li, .price-nav, .media-body a, .media-date::after, .wpgmp_pagination a, .wpgmp_pagination span, .milestone-nav li span, .milestone-nav li::after, .blog-box h4, .client .slick-dots li button, .client-slider img, .service-box p, .service-box .job-details, .service-box .blog-details, .service-box h4, .home-track-inner ul li a, .navbar-brand img, .navbar-collapse>ul>li:nth-last-child(2)>a, .navbar-collapse>ul>li:last-child>a, .header, .slide-nav ul li a, .checkmark, .radio-mark, .form-control, .contact-form .wpcf7-form-control, .contact-form .wpcf7-textarea, .booking-page-link ul li a, .step-nav ul li:before, .delivery-content-box, .dashboard-heading .parcel-order ul li label div, .order-filter ul li .order-filter-box, .btn-link::after, .common-btn, .contact-form .wpcf7-submit {
+    -webkit-transition: all 0.3s linear;
+    -ms-transition: all 0.3s linear;
+    transition: all 0.3s linear;
+}
+.step-nav ul li:before {
+    font-family: "ecourier", FontAwesome, sans-serif;
+    width: 30px;
+    height: 30px;
+    content: "\f111";
+    line-height: 30px;
+    background: #F1F3F4;
+    display: block;
+    margin: 0 auto 10px;
+    border-radius: 50%;
+    color: #D8D8D8;
+}
+
+.step-nav ul li.active+li::after {
+    background: #602D90;
+}
+.step-nav ul li:after {
+    width: 100%;
+    height: 2px;
+    content: "";
+    position: absolute;
+    background: #D8D8D8;
+    top: 15px;
+    left: -50%;
+    z-index: -1;
+}
+.booking-page-link ul {
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid #E3E3E3;
+}
+
+a {
+    text-decoration: none;
+    background-color: #fff0;
+    -webkit-text-decoration-skip: objects;
+}
+a {
+    background-color: #fff0;
+}
+.booking-page-link ul li:first-child a i {
+    transform: translate(1px, 1px) scale(1.45);
+    display: inline-block;
+    padding: 5px !important;
+}
+
+.step-nav ul li:before {
+    font-family: "ecourier", FontAwesome, sans-serif;
+    width: 30px;
+    height: 30px;
+    content: "\f111";
+    line-height: 30px;
+    background: #F1F3F4;
+    display: block;
+    margin: 0 auto 10px;
+    border-radius: 50%;
+    color: #D8D8D8;
+}
+
+.booking-page {
+    padding: 10px 0 10px !important;
+    background: #fff
+}
+
+
+.booking-page-link ul {
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid #E3E3E3
+}
+
+.booking-page-link ul li a {
+    text-align: center;
+    color: #959595;
+    padding: 15px 0 15px;
+    display: block;
+    text-transform: capitalize;
+    font-weight: 500 !important;
+    font-size: 20px;
+}
+
+.booking-page-link ul li:first-child a i {
+    transform: translate(1px,1px) scale(1.45);
+    display: inline-block
+}
+
+.booking-page-link ul li:last-child a {
+    color: #602D90;
+    border-bottom: 2px solid #602D90
+}
+
+.booking-page-link ul li:last-child a i {
+    transform: translate(1px,1px);
+    display: inline-block
+}
+
+.booking-page .shipping-form {
+    background: #F1F3F4;
+}
+
+.booking-page .shipping-form .form-label {
+    color: #1B1E1A;
+    font-weight: 500;
+    display: block
+}
+
+.booking-page .shipping-form .form-label sup {
+    color: #FF5B5B;
+    font-size: 14px;
+    top: -5px
+}
+
+.booking-page .shipping-form .hints {
+    display: block;
+    color: #959595;
+    font-size: 14px;
+    margin-top: 5px
+}
+
+.booking-page .shipping-form .promo {
+    position: relative;
+    margin-bottom: 10px
+}
+
+.booking-page .shipping-form .promo .common-btn,.booking-page .shipping-form .promo .contact-form .wpcf7-submit,.contact-form .booking-page .shipping-form .promo .wpcf7-submit {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 100px;
+    text-align: center;
+    padding-left: 0;
+    padding-right: 0;
+    border-radius: 0 4px 4px 0
+}
+
+.booking-page .shipping-form .promo .common-btn-remove {
+    background: #FF5B5B;
+    color: #fff;
+    z-index: 9
+}
+
+.booking-page .shipping-form .promo .common-btn-remove::after {
+    display: none
+}
+
+.booking-page .shipping-form .promo-success i {
+    color: #602D90
+}
+
+.booking-page .shipping-form .promo-failure {
+    color: #FF5B5B
+}
+
+.booking-page .shipping-form .check-terms {
+    margin-top: 20px
+}
+
+.booking-page .shipping-form .booking-info-heading {
+    color: #271932;
+    font-size: 18px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    line-height: normal;
+    margin: 20px 0
+}
+
+.booking-page .shipping-form .booking-info-heading a {
+    padding: 6px 15px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 2px solid #602D90;
+    color: #602D90;
+    border-radius: 4px
+}
+
+.booking-page .shipping-form .booking-info ul {
+    padding: 0;
+    margin: 0
+}
+
+.booking-page .shipping-form .booking-info ul li {
+    padding: 5px 0;
+    display: flex;
+    justify-content: space-between;
+    color: #646F70;
+    line-height: 24px
+}
+
+.booking-page .shipping-form .booking-info ul li strong {
+    font-weight: 600;
+    max-width: 50%;
+    color: #3a3a3a;
+    text-align: right
+}
+
+.booking-page-heading {
+    color: #271932;
+    margin: 0 0 25px;
+    font-size: 28px;
+    font-weight: 600
+}
+
+.book-confirm {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    -webkit-box-shadow: 0 0 15px rgb(27 30 26 / .1);
+    -ms-box-shadow: 0 0 15px rgb(27 30 26 / .1);
+    box-shadow: 0 0 15px rgb(27 30 26 / .1);
+    padding: 15px
+}
+
+.book-confirm h3 {
+    margin: 0;
+    color: #271932
+}
+
+.book-confirm h3 span {
+    display: block;
+    font-size: 15px;
+    font-weight: 400;
+    margin-top: 5px
+}
+
+.book-confirm .common-btn,.book-confirm .contact-form .wpcf7-submit,.contact-form .book-confirm .wpcf7-submit {
+    padding-left: 15px;
+    padding-right: 15px;
+    width: auto!important
+}
+
+.boolean-check {
+    margin-bottom: 10px
+}
+
+.boolean-check ul {
+    padding: 0;
+    margin: 0;
+    display: flex
+}
+
+.boolean-check ul li:not(:last-child) {
+    margin-right: 10px
+}
+
+.boolean-check ul li label {
+    background: #fff;
+    border: 1px solid rgb(0 0 0 / .12);
+    padding: 10px 10px;
+    border-radius: 4px;
+    min-width: 80px
+}
+
+.step-nav ul li {
+    width: 25%;
+    font-size: 14px;
+    position: relative;
+    text-align: center;
+    color: #3a3a3a;
+    cursor: pointer;
+}
+
+.step-nav ul li:before {
+    font-family: "ecourier", FontAwesome, sans-serif;
+    width: 30px;
+    height: 30px;
+    content: "\f111";
+    line-height: 30px;
+    background: #F1F3F4;
+    display: block;
+    margin: 0 auto 10px;
+    border-radius: 50%;
+    color: #D8D8D8
+}
+
+.step-nav ul li:after {
+    width: 100%;
+    height: 2px;
+    content: "";
+    position: absolute;
+    background: #D8D8D8;
+    top: 15px;
+    left: -50%;
+    z-index: -1
+}
+
+.step-nav ul li:first-child:after {
+    display: none
+}
+
+.step-nav ul li.active {
+    /* color:#1B1E1A; */
+    /* font-weight:500; */
+    /* pointer-events:initial; */
+}
+
+.step-nav ul li.active:before {
+    color: #602D90;
+}
+
+.step-nav ul li.active+li::after {
+    background: #602D90
+}
+
+.step-nav ul li.done:before {
+    font-size: 24px;
+    content: "\e907"
+}
+
+.delivery-content-box {
+    background: #fff;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    border: 2px solid #fff;
+    border-radius: 5px;
+    margin-bottom: 15px
+}
+
+.delivery-content-box .radio-mark {
+    margin-top: 6px
+}
+
+.delivery-content-box .delivery-details {
+    width: 75%
+}
+
+.delivery-content-box .delivery-details h5 {
+    font-size: 14px;
+    line-height: 24px;
+    color: #1B1E1A;
+    margin: 0
+}
+
+.delivery-content-box .delivery-details h5 span {
+    font-size: 16px;
+    font-weight: 400;
+    margin-bottom: 5px;
+    display: block
+}
+
+.delivery-content-box .delivery-details h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1B1E1A
+}
+
+.delivery-content-box .delivery-details h3 span {
+    color: #3a3a3a;
+    font-weight: 400
+}
+
+.delivery-content-box .delivery-details h2 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #602D90;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px dashed #602D90;
+    margin: 0 0 15px;
+    background: #F1F3F4;
+    line-height: 1
+}
+
+.delivery-content-box .delivery-details h2 span {
+    display: block;
+    font-weight: 400;
+    font-size: 12px;
+    margin-top: 10px
+}
+
+.delivery-content-box .delivery-details p,.delivery-content-box .delivery-details .job-details,.delivery-content-box .delivery-details .blog-details {
+    font-size: 12px;
+    line-height: 18px;
+    margin: 0 0 5px
+}
+
+.delivery-content-box .delivery-logo {
+    margin-left: 10px
+}
+
+.delivery-content-box .delivery-logo img {
+    width: 40px;
+    height: 40px;
+    border-radius: 100%;
+    object-fit: contain
+}
+
+.cp-added {
+    padding-top: 15px;
+    border-top: 1px solid rgb(0 0 0 / .15)
+}
+
+.cp-edit {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px
+}
+
+.cp-edit span:nth-child(1) {
+    background: #6A878B;
+    color: #fff;
+    border-radius: 30px;
+    padding: 6px 12px
+}
+
+.cp-edit span:nth-child(2) {
+    color: #602D90;
+    font-weight: 600;
+    font-size: 16px
+}
+
+.postage {
+    background: #fff;
+    padding: 10px 15px;
+    margin-top: 15px
+}
+
+.postage h3 {
+    font-size: 20px;
+    line-height: 28px;
+    color: #1B1E1A;
+    font-weight: 600
+}
+
+.postage-box {
+    background: #F1F3F4;
+    border: 1px dashed rgb(0 0 0 / .15)
+}
+
+.postage-box-top {
+    padding: 15px;
+    border-bottom: 1px dashed rgb(0 0 0 / .15);
+    background: #fff
+}
+
+.postage-box-top h5 {
+    margin: 0
+}
+
+.postage-box-top p,.postage-box-top .job-details,.postage-box-top .blog-details {
+    font-size: 14px;
+    line-height: 24px;
+    color: #1B1E1A;
+    margin: 0
+}
+
+.postage-box-top p strong,.postage-box-top .job-details strong,.postage-box-top .blog-details strong {
+    font-weight: 600
+}
+
+.postage-box-bottom {
+    padding: 15px;
+    display: flex;
+    justify-content: space-between
+}
+
+.postage-box-bottom div {
+    width: 85%
+}
+
+.postage-box-bottom div h5 {
+    margin-bottom: 5px
+}
+
+.postage-box-bottom div p,.postage-box-bottom div .job-details,.postage-box-bottom div .blog-details {
+    margin-bottom: 10px
+}
+
+.postage-box-bottom div h4 {
+    font-size: 20px;
+    line-height: 28px;
+    color: #602D90;
+    margin-bottom: 0
+}
+
+.postage-box-bottom img {
+    height: 48px
+}
+
+.otp-content {
+    text-align: center
+}
+
+.otp-content h6 {
+    text-align: center;
+    font-weight: 400;
+    font-size: 15px;
+    line-height: 24px
+}
+
+.otp-content h6 a {
+    font-weight: 500;
+    color: #3a3a3a
+}
+
+.otp-content h6 a i {
+    color: #602D90
+}
+
+.otp-content .common-btn,.otp-content .contact-form .wpcf7-submit,.contact-form .otp-content .wpcf7-submit {
+    width: 100%;
+    text-align: center;
+    background: #56C4CF;
+    margin-top: 15px;
+    color: #fff!important
+}
+
+.otp-content .common-btn::after,.otp-content .contact-form .wpcf7-submit::after,.contact-form .otp-content .wpcf7-submit::after {
+    display: none
+}
+
+.otp-content p,.otp-content .job-details,.otp-content .blog-details {
+    margin: 10px 0 5px;
+    font-size: 14px;
+    line-height: 24px
+}
+
+.otp-content p a,.otp-content .job-details a,.otp-content .blog-details a {
+    color: #602D90;
+    font-weight: 600
+}
+
+.otp-content .otp-input {
+    padding: 0 40px;
+    margin: 20px 0;
+    justify-content: space-between;
+    display: flex;
+    align-items: center
+}
+
+.otp-content .otp-input .otp-box {
+    width: 23%;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    border: 1px solid #C3CED8;
+    border-radius: 4px;
+    background: #fff
+}
+
+.otp-content .otp-input .otp-box::before {
+    content: "";
+    display: block;
+    background: #E4F6FF;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    transition: all 600ms cubic-bezier(.31,.36,.21,.75);
+    transform: translate3d(-140%,0,0) skewX(25deg);
+    will-change: transform;
+    z-index: -1
+}
+
+.otp-content .otp-input .otp-box input {
+    border: none;
+    background: none;
+    padding: 10px;
+    font-size: 24px;
+    text-align: center;
+    font-family: "Poppins",sans-serif;
+    font-weight: 600
+}
+
+.otp-content .otp-input .otp-box.not-empty::before {
+    transform: translate3d(0,0,0) skewX(0deg)
+}
+
+.otp-content .otp-input .otp-box.not-empty input {
+    color: #333
+}
+
+.radio input:checked~.delivery-content-box .radio-mark {
+    box-shadow: 0 0 0 10px #602D90 inset
+}
+
+.radio input:checked~.delivery-content-box {
+    border: 2px solid #56C4CF;
+    box-shadow: 0 20px 14px rgb(0 0 0 / .12)
+}
+
+.radio input:checked~.delivery-content-box h5 span {
+    font-weight: 600
+}
+
+.modal-cp .modal-inner {
+    padding: 1rem 1rem 1rem
+}
+
+.modal-cp .delivery-content {
+    height: 70vh;
+    overflow-y: auto
+}
+
+.modal-cp .delivery-content-box .delivery-details {
+    width: 90%
+}
+
+.modal-cp .common-btn,.modal-cp .contact-form .wpcf7-submit,.contact-form .modal-cp .wpcf7-submit {
+    width: 100%;
+    text-align: center;
+    background: #56C4CF
+}
+
+.modal-cp .common-btn::after,.modal-cp .contact-form .wpcf7-submit::after,.contact-form .modal-cp .wpcf7-submit::after {
+    display: none
+}
+
+.payment-method {
+    background: #F1F3F4
+}
+
+.payment-method ul {
+    display: block
+}
+
+.payment-method ul li {
+    width: 100%
+}
+
+.payment-method ul li:not(:last-child) {
+    margin-bottom: 15px
+}
+
+.payment-method ul li label {
+    display: flex;
+    align-items: center;
+    padding: 15px
+}
+
+.payment-method ul li label img {
+    margin-left: auto
+}
+
+.payment-method .common-btn,.payment-method .contact-form .wpcf7-submit,.contact-form .payment-method .wpcf7-submit {
+    width: 100%;
+    text-align: center;
+    background: #56C4CF;
+    margin-top: 200px;
+    color: #fff!important
+}
+
+.payment-method .common-btn::after,.payment-method .contact-form .wpcf7-submit::after,.contact-form .payment-method .wpcf7-submit::after {
+    display: none
+}
+
+#parcel_type_hint {
+    font-size: 13px;
+    margin: -10px 0 10px
+}
+
+.thanks {
+    padding: 150px 0 250px;
+    background: #F1F3F4
+}
+
+.thanks-top {
+    padding-bottom: 10px;
+    text-align: center
+}
+
+.thanks-top .circle-checkmark {
+    width: 35px;
+    height: 35px;
+    background: #602D90;
+    border-radius: 100%;
+    display: flex;
+    margin: 0 auto;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 22px
+}
+
+.thanks-top h3 {
+    font-size: 24px;
+    line-height: 36px;
+    color: #1B1E1A;
+    font-weight: 600;
+    margin: 10px 0 0
+}
+
+.thanks-top p,.thanks-top .job-details,.thanks-top .blog-details {
+    margin: 10px 0 0
+}
+
+.thanks-content {
+    background: #fff;
+    border: 1px solid rgb(0 0 0 / .1);
+    border-radius: 5px;
+    padding: 15px;
+    margin-top: 10px;
+    position: relative
+}
+
+.thanks-content p,.thanks-content .job-details,.thanks-content .blog-details {
+    margin: 0
+}
+
+.thanks-content h5 {
+    font-size: 18px;
+    line-height: 28px;
+    color: #1B1E1A;
+    font-weight: 500;
+    margin: 5px 0 0
+}
+
+.thanks-content .share-box {
+    width: 40px;
+    height: 40px;
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    background: rgb(186 249 255 / .7);
+    border-radius: 100%;
+    display: flex;
+    transform: translateY(-50%);
+    align-items: center;
+    color: #56C4CF;
+    justify-content: center;
+    font-size: 20px
+}
+
+.thanks-content .common-btn,.thanks-content .contact-form .wpcf7-submit,.contact-form .thanks-content .wpcf7-submit {
+    width: 100%;
+    text-align: center;
+    background: #56C4CF;
+    margin-top: 15px
+}
+
+.thanks-content .common-btn::after,.thanks-content .contact-form .wpcf7-submit::after,.contact-form .thanks-content .wpcf7-submit::after {
+    display: none
+}
+
+.share-dialog {
+    display: none;
+    width: 95%;
+    box-shadow: 0 0 15px -3px rgb(0 0 0 / .4);
+    z-index: -1;
+    padding: 20px;
+    background-color: #fff
+}
+
+.share-dialog i {
+    width: 20px;
+    height: 20px;
+    margin-right: 7px;
+    font-size: 20px
+}
+
+.share-dialog button,.share-dialog .button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: auto;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    color: #fff;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: normal;
+    letter-spacing: 1px;
+    text-transform: capitalize;
+    text-decoration: none;
+    white-space: nowrap;
+    border-radius: 2px;
+    cursor: pointer;
+    border: none
+}
+
+.share-dialog button::before,.share-dialog .button::before {
+    font-size: 22px
+}
+
+.share-dialog .icon-facebook {
+    background-color: #3b5998
+}
+
+.share-dialog .icon-messenger {
+    background: #0080f7
+}
+
+.share-dialog .icon-whatsapp {
+    background: #48c355
+}
+
+.share-dialog .icon-viber {
+    background: #7f4790
+}
+
+.share-dialog .icon-skype {
+    background: #27a3e3
+}
+
+.share-dialog .icon-sms {
+    background: #1B1E1A
+}
+
+.share-dialog .copy-link {
+    background: #56C4CF;
+    color: #1B1E1A
+}
+
+.share-dialog .share-button,.share-dialog .copy-link {
+    padding-left: 30px;
+    padding-right: 30px
+}
+
+.share-button {
+    position: fixed;
+    bottom: -500px;
+    left: 0;
+    top: auto;
+    width: 100%;
+    z-index: 999999;
+    transition: all 400ms cubic-bezier(.92,.12,0,.66)
+}
+
+.share-dialog {
+    position: fixed;
+    bottom: -500px;
+    left: 0;
+    top: auto;
+    width: 100%;
+    z-index: 999999;
+    transition: all 400ms cubic-bezier(.92,.12,0,.66)
+}
+
+.share-dialog.is-open {
+    display: block;
+    bottom: 0
+}
+
+.share-dialog header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    align-items: center
+}
+
+.dialog-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 500;
+    text-transform: capitalize;
+    color: #111
+}
+
+.share-dialog .targets {
+    display: grid;
+    grid-gap: 20px;
+    grid-template-columns: repeat(6,1fr)
+}
+
+.share-dialog .close-button {
+    background-color: #fff0;
+    border: none;
+    padding: 0;
+    color: #111
+}
+
+.share-dialog .close-button i {
+    margin-right: 0;
+    font-style: normal
+}
+
+.share-dialog .link {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    border-radius: 4px;
+    background-color: #eee;
+    margin-top: 20px
+}
+
+.share-dialog .pen-url {
+    margin-right: 15px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap
+}
+
+.form-control .quickTech-price, .contact-form .wpcf7-form-control, .contact-form .wpcf7-textarea {
+    padding: 5px 12px !important;
+    border-radius: 4px;
+    resize: none;
+    border: 1px solid #c9d1d5;
+    color: #213540;
+    display: block;
+    width: 100%;
+    font-size: 1rem;
+    line-height: 1.5;
+    background-color: #F1F3F4;
+    background-clip: padding-box;
+    font-weight: 300;
+}
+.step-nav ul li.done:before {
+    font-family: FontAwesome, sans-serif;
+    font-size: 24px;
+    content: "\f00c"; /* Unicode for checkmark in FontAwesome */
+}
+
+
+.shipping-form .btn-wrap .common-btn, .shipping-form .btn-wrap .contact-form .wpcf7-submit, .contact-form .shipping-form .btn-wrap .wpcf7-submit {
+    width: 48%;
+}
+.shipping-form .common-btn.prev, .shipping-form .contact-form .prev.wpcf7-submit, .contact-form .shipping-form .prev.wpcf7-submit {
+    background: none;
+    color: #AF251B;;
+    border: 2px solid #AF251B;;
+}
+.slide-content .common-btn.prev {
+    color: #AF251B !important;
+}
+.slide-content .common-btn, .slide-content .contact-form .wpcf7-submit, .contact-form .slide-content .wpcf7-submit {
+    color: #ffffff !important;
+}
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+    .select-style select {
+        padding: 10px 10px;
+    }
+}
+.select-style select {
+
+    background-color: #fff0;
+    background-image: none;
+    font-size: 1rem;
+    line-height: 1.25;
+    padding: 5px 8px;
+    width: 100%;
+    color: #213540;
+}
+
+.select2-container--default.select2-container--open.select2-container--below .select2-selection--single, .select2-container--default.select2-container--open.select2-container--below .select2-selection--multiple {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+.select2-container--default .select2-selection--single {
+    border: 1px solid #c9d1d5;
+    background-color: #fff;
+    border-radius: 4px;
+}
+.select2-container .select2-selection--single {
+    box-sizing: border-box;
+    cursor: pointer;
+    display: block;
+    height: 48px;
+    user-select: none;
+    -webkit-user-select: none;
+    resize: none;
+    padding: 10px 5px;
+    color: #213540;
+    display: block;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+.select2-container--default .select2-search--dropdown .select2-search__field {
+    border: 1px solid #c9d1d5;
+}
+.select2-search--dropdown .select2-search__field {
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 4px;
+}
+[type=search] {
+    -webkit-appearance: textfield;
+    outline-offset: -2px;
+}
+[type=search] {
+    outline-offset: -2px;
+    -webkit-appearance: none;
+}
+
+
+/* Styles for mobile devices (max-width: 768px for tablets and smaller devices) */
+@media screen and (max-width: 768px) {
+    .booking-page-link ul li a {
+        padding: 10px 0 10px;
+        font-size: 16px;
+    }
+    .booking-page-heading {
+        font-size: 22px;
+        font-weight: 600
+    }
+}
+
+/* Styles for mobile phones (max-width: 480px) */
+@media screen and (max-width: 480px) {
+    .booking-page-link ul li a {
+        padding: 8px 0 8px;
+        font-size: 14px;
+    }
+    .booking-page-heading {
+        font-size: 14px;
+        font-weight: 500
+    }
+    .step-nav ul li {
+        width: 50%;
+        font-size: 8px;
+    }
+    .shipping-form {
+        padding: 10px;
+    }
+    .step-nav {
+        margin-bottom: 10px !important;
+    }
+}
+
+.payment-option-box .amx-md-panel.amx-md-panel-rounded {
+    border-radius: 3px !important;
+    margin-left: 28px !important;
+    margin-right: 28px !important;
+}
+.amx-md-panel.amx-md-panel-rounded {
+    border-radius: 20px;
+    margin-top: 10px !important;
+    margin-bottom: 10px !important;
+}
+.amx-h-equal-height>div {
+    display: -ms-flexbox;
+    display: flex;
+    -ms-box-flex: 1;
+    box-flex: 1;
+}
+
+.amx-md-panel {
+    position: relative;
+    background-color: #fff;
+    text-align: center;
+    box-shadow: 0 1px 5px -1px #ccc;
+}
+@media (min-width: 1025px) {
+    .amx-large-span-4-8, [class*=amx-large-]>.amx-large-block-4-8 {
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+}
+@media (min-width: 1025px) {
+    .amx-large-span-4-8 {
+        width: 47.5%;
+        float: left;
+        margin-left: 1.25%;
+        margin-right: 1.25%;
+    }
+}
+@media (min-width: 668px) {
+    .amx-medium-span-4-8, [class*=amx-medium-]>.amx-medium-block-4-8 {
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+}
+@media (min-width: 668px) {
+    .amx-medium-span-4-8 {
+        width: 47.5%;
+        float: left;
+        margin-left: 1.25%;
+        margin-right: 1.25%;
+    }
+}
+.amx-small-span-2-4, [class*=amx-small-]>.amx-small-block-2-4 {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+.payment-option-box .box-card label {
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 22px;
+    color: #353535;
+    display: flex
+;
+    align-items: center;
+}
+.payment-option-box .navigation-block label {
+    width: 155px;
+    min-height: 155px;
+    padding: 43px 9px 22px;
+    box-shadow: 0px 6px 16px #E8E8E8B5;
+    border-radius: 3px;
+    background-color: #FFFFFF;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: all 300ms ease;
+    border: 1px solid transparent;
+}
+.amx-md-custom-radios .amx-md-panel label {
+    margin: 0;
+}
+.amx-md-custom-radios .amx-md-panel label {
+    margin: 0;
+}
+.amx-md-custom-radios label input[type=radio] {
+    display: none;
+}
+.amx-md-custom-radios label input[type=radio] {
+    display: none;
+}
+[type=radio]:checked, [type=radio]:not(:checked) {
+    position: absolute;
+    left: -9999px;
+}
+[type=radio]:checked, [type=radio]:not(:checked) {
+    position: absolute;
+    left: -9999px;
+}
+.amx-form-entry-container input, .amx-form-entry-container textarea {
+    color: #000000D9;
+}
+@media (min-width: 668px) {
+    .amx-form-entry-container input, .amx-form-entry-container textarea {
+        max-width: 350px;
+    }
+}
+.amx-form-entry-container input, .amx-form-entry-container textarea {
+    -webkit-appearance: none;
+    appearance: none;
+    border: 1px solid #ccc;
+    color: #666;
+    font-family: RedHatDisplay, Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    padding: 11px 20px;
+    width: 100%;
+    border-radius: 0;
+}
+.amx-form-entry-container input, .amx-form-entry-container label {
+    display: block;
+}
+.amx-form-entry-container input {
+    line-height: 22px;
+    transition: background-color .3s ease-in-out, border-color .3s ease-in-out;
+}
+input[type=checkbox], input[type=radio] {
+    box-sizing: border-box;
+    padding: 0;
+}
+.payment-option-box .custom-radio-button {
+    min-width: 0;
+    width: 100%;
+}
+.custom-radio-button {
+    min-width: 100px;
+}
+.amx-md-custom-radios label input[type=radio]:checked+.custom-radio-button .icon-status {
+    display: block;
+}
+.amx-md-custom-radios label input[type=radio]:checked+.custom-radio-button .icon-status {
+    display: block;
+}
+.payment-option-box .amx-md-custom-radios label .custom-radio-button .icon-status {
+    height: 35px;
+    right: 10px;
+    top: 10px;
+    width: 35px;
+}
+.amx-md-custom-radios label .custom-radio-button .icon-status {
+    background-image: url(../images/svg/icon-accordion-valid.svg);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 100%;
+    display: none;
+    height: 42px;
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    width: 42px;
+}
+.amx-md-custom-radios label .custom-radio-button .icon-status {
+    background-image: url(../images/svg/icon-accordion-valid.svg);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 100%;
+    display: none;
+    height: 42px;
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    width: 42px;
+}
+.amx-md-custom-radios label .custom-radio-button .amx-cp-icon-holder {
+    margin-bottom: 15px;
+}
+.amx-md-custom-radios label .custom-radio-button .amx-cp-icon-holder {
+    margin-bottom: 15px;
+}
+.payment-option-box .amx-md-custom-radios label input[type=radio]:checked + .custom-radio-button .amx-cp-icon-holder i.amx-i-cash-payment, .payment-option-box .amx-md-custom-radios label:hover .amx-cp-icon-holder i.amx-i-cash-payment, .payment-option-box .amx-md-custom-radios label:focus .amx-cp-icon-holder i.amx-i-cash-payment {
+    background-image: url(/Sitefinity/WebsiteTemplates/aramex/App_Themes/aramex/Images/svg/case-active-ic.svg);
+}
+.amx-md-custom-radios label input[type=radio]:checked+.custom-radio-button .amx-cp-icon-holder i.amx-i-cash-payment {
+    background-image: url(../images/svg/icon-cash-payment.svg);
+}
+.amx-md-custom-radios label input[type=radio]:checked+.custom-radio-button .amx-cp-icon-holder i.amx-i-cash-payment {
+    background-image: url(../images/svg/icon-cash-payment.svg);
+}
+.amx-md-custom-radios label .custom-radio-button .amx-cp-icon-holder i {
+    display: block;
+    margin: 0 auto;
+}
+.amx-md-custom-radios label .custom-radio-button .amx-cp-icon-holder i {
+    display: block;
+    margin: 0 auto;
+}
+.payment-option-box .amx-i-cash-payment {
+    background-image: url(/Sitefinity/WebsiteTemplates/aramex/App_Themes/aramex/Images/svg/case-ic.svg);
+    height: 29px;
+    width: 44px;
+}
+@media (min-width: 668px) {
+    .amx-i-cash-payment {
+        height: 59px;
+        width: 89px;
+    }
+}
+.amx-i-cash-payment {
+    background-image: url(../images/svg/icon-cash-payment.svg);
+    background-size: 100%;
+    background-repeat: no-repeat;
+    height: 59px;
+    width: 89px;
+}
+@media (min-width: 668px) {
+    .amx-i-cash-payment {
+        height: 59px;
+        width: 89px;
+    }
+}
+.amx-i-cash-payment {
+    background-image: url('/avatar/credit.jpeg');
+    background-size: 100%;
+    background-repeat: no-repeat;
+    height: 59px;
+    width: 89px;
+}
+.amx-form-entry-container label {
+    color: #333;
+    font-family: RedHatDisplay, Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    line-height: 23px;
+    margin-bottom: 2px;
+}
+user agent stylesheet
+label {
+    cursor: default;
+}
+.amx-md-panel {
+    position: relative;
+    background-color: #fff;
+    text-align: center;
+    box-shadow: 0 1px 5px -1px #ccc;
+}
+.amx-md-panel {
+    position: relative;
+    background-color: #fff;
+    text-align: center;
+    box-shadow: 0 1px 5px -1px #ccc;
+}
+.amx-form-entry-container {
+    position: relative;
+    margin-bottom: 13px;
+    text-align: left;
+}
+.amx-form-entry-container {
+    position: relative;
+    margin-bottom: 13px;
+    text-align: left;
+}
+.card {
+    position: relative;
+    display: -ms-flexbox;
+    display: flex
+;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    min-width: 0;
+    word-wrap: break-word;
+    background-color: #fff;
+    background-clip: border-box;
+    border: 1px solid rgba(0, 0, 0, .125);
+    border-radius: .25rem;
+}
+
+.payment-options {
+    display: flex;
+    gap: 20px;
+}
+
+.payment-option {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    width: 150px;
+    height: 150px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.payment-option:hover {
+    border-color: #007bff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.payment-option input {
+    display: none; /* Hide the native radio button */
+}
+
+.payment-option .option-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    padding: 20px;
+}
+
+.payment-option img {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 10px;
+}
+
+.payment-option .checkmark {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    background-color: #007bff;
+    border-radius: 50%;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    font-size: 18px;
+    line-height: 1;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.payment-option input:checked + .option-content .checkmark {
+    display: flex; /* Show checkmark when the radio button is selected */
+}
+
+.payment-option input:checked ~ .option-content {
+    border-color: #007bff;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}

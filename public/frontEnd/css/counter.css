@@ -1,0 +1,202 @@
+
+/*Fun Fact area*/
+/*----------------------------------------------------*/
+#ft-funfact-2 {
+    background-image: url('/frontEnd/img/shape-bg.jpg');
+    /* Note the forward slash */
+}
+
+#ft-funfact-2 .container {
+    width: 65% !important;
+}
+
+.ft-funfact-section {
+    padding: 50px 0px 110px;
+}
+
+.ft-funfact-content {
+    padding: 40px 0px;
+    background-color: #f4f4f4;
+}
+
+.ft-funfact-innerbox .ft-funfact-icon {
+    margin-bottom: 8px;
+}
+
+.ft-funfact-innerbox .ft-funfact-icon i {
+    font-size: 45px;
+    color: #ea1e00;
+}
+
+/* Default styles for larger screens (desktop, tablets) */
+.ft-funfact-innerbox .ft-funfact-text h3 {
+    color: #052e56;
+    font-size: 45px;
+    font-weight: 700;
+}
+
+/* Media query for mobile devices (typically screen width 767px or less) */
+@media (max-width: 767px) {
+    .ft-funfact-innerbox .ft-funfact-text h3 {
+        font-size: 30px; /* Adjust font size for mobile */
+        /* You can add or modify other properties as needed for mobile */
+    }
+}
+
+/* You might also consider slightly larger breakpoints for smaller tablets */
+@media (max-width: 576px) {
+    .ft-funfact-innerbox .ft-funfact-text h3 {
+        font-size: 24px; /* Further adjust for smaller mobiles */
+    }
+}
+
+.ft-funfact-innerbox .ft-funfact-text p {
+    color: #666666;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: "Poppins";
+}
+
+.ft-funfact-section-2 {
+    padding: 115px 0px;
+}
+
+.ft-funfact-section-2 .ft-section-title-3 {
+    margin: 0 auto;
+    max-width: 820px;
+}
+
+.ft-funfact-section-2 {
+    overflow: hidden;
+}
+
+.ft-funfact-content-2 {
+    z-index: 1;
+    padding-top: 100px;
+}
+
+.ft-funfact-content-2 .map-bg {
+    top: 0;
+    left: 0;
+    right: 0;
+    opacity: 0.5;
+    z-index: -1;
+}
+
+.ft-funfact-inner-items-wrapper:before {
+    top: 45%;
+    left: 0;
+    right: 0;
+    width: 95%;
+    content: "";
+    margin: 0 auto;
+    position: absolute;
+    border: 2px dashed #dbdbdb;
+    -webkit-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+
+.ft-funfact-inner-items .ft-funfact-inner-icon {
+    width: 65px;
+    height: 65px;
+    margin: 0 auto;
+    margin-bottom: 40px;
+    border-radius: 100%;
+    background-color:  #D2001A;
+}
+
+.ft-funfact-inner-items .ft-funfact-inner-icon:after {
+    left: 25px;
+    bottom: -8px;
+    content: "";
+    position: absolute;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 10px solid #D2001A;
+}
+
+.ft-funfact-inner-items .ft-funfact-inner-icon img {
+    color: #ffffff;
+    font-size: 35px;
+    width: 40px !important;
+    line-height: 0.75;
+}
+
+.ft-funfact-inner-items .ft-funfact-inner-text h3 {
+    color: #D2001A;
+    font-size: 36px;
+    line-height: 43px;
+    font-weight: 700;
+}
+
+.ft-funfact-inner-items .ft-funfact-inner-text p {
+    color: #808080;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.ft-funfact-slug-text {
+    margin-top: 70px;
+}
+
+.ft-funfact-slug-text span {
+    color: #000000;
+}
+
+.ft-funfact-slug-text span a {
+    color: #008eff;
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+.ft-thx-work-process-section {
+    padding: 110px 0px;
+}
+
+.ft-thx-work-process-section .td-sv-work-step-content {
+    margin-top: 50px;
+}
+
+.ft-thx-work-process-section .ft-thx-work-process-shape {
+    top: 0;
+    right: 0;
+}
+.ft-section-title-3 span {
+    font-family: 'Roboto', sans-serif;
+    color: #ffc107;
+    font-size: 18px;
+    line-height: 27px;
+    font-weight: 600;
+}
+/* Default styles for larger screens (desktop, tablets) */
+.ft-section-title-3 h2 {
+    font-family: 'Poppins', sans-serif;
+    color: #d2001a;
+    font-size: 48px;
+    line-height: 58px;
+    font-weight: 700;
+    padding: 20px;
+}
+
+/* Media query for mobile devices (typically screen width 767px or less) */
+@media (max-width: 767px) {
+    .ft-section-title-3 h2 {
+        font-size: 32px; /* Adjust font size for mobile */
+        line-height: 40px; /* Adjust line height for mobile */
+        padding: 15px;   /* Adjust padding for mobile */
+        /* You can add or modify other properties as needed for mobile */
+    }
+}
+
+/* You might also consider slightly larger breakpoints for smaller tablets */
+@media (max-width: 576px) {
+    .ft-section-title-3 h2 {
+        font-size: 28px; /* Further adjust for smaller mobiles */
+        line-height: 36px; /* Further adjust line height */
+        padding: 10px;   /* Further adjust padding */
+    }
+}
+.ft-funfact-section-2 .ft-section-title-3 {
+    margin: 0 auto;
+    max-width: 820px;
+}

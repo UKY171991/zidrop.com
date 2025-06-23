@@ -1,0 +1,162 @@
+
+.nigeria-flag {
+    position: absolute;
+    right: 20px; /* Moves the flag to the right side */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 25px;
+    height: 18px;
+    background: url('https://flagcdn.com/w40/ng.png') no-repeat center center;
+    background-size: cover;
+    pointer-events: none; /* Prevents interference with input clicks */
+}
+/* delivery man create */
+.del_nigeria_flag {
+    position: absolute;
+    right: 15px; /* Moves the flag to the right side */
+    top: 70%;
+    transform: translateY(-50%);
+    width: 25px;
+    height: 18px;
+    background: url('https://flagcdn.com/w40/ng.png') no-repeat center center;
+    background-size: cover;
+    pointer-events: none; /* Prevents interference with input clicks */
+}
+.mer_nigeria_flag{
+    position: absolute;
+    right: 15px; /* Moves the flag to the right side */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 25px;
+    height: 18px;
+    background: url('https://flagcdn.com/w40/ng.png') no-repeat center center;
+    background-size: cover;
+    pointer-events: none; /* Prevents interference with input clicks */
+}
+.p2p_nigeria_flag{
+    position: absolute;
+right: 15px; /* Adjust for proper alignment */
+top: 70%;
+transform: translateY(-50%);
+width: 25px;
+height: 18px;
+background: url('https://flagcdn.com/w40/ng.png') no-repeat center center;
+background-size: cover;
+pointer-events: none; /* Prevent interaction */
+}
+.wp2p_nigeria_flag{
+    position: absolute;
+    right: 35px; /* Moves the flag to the right side */
+    top: 70%;
+    transform: translateY(-50%);
+    width: 25px;
+    height: 18px;
+    background: url('https://flagcdn.com/w40/ng.png') no-repeat center center;
+    background-size: cover;
+    pointer-events: none; /* Prevents interference with input clicks */
+}
+.p2pr_nigeria_flag{
+    position: absolute;
+    right: 35px; /* Moves the flag to the right side */
+    top: 70%;
+    transform: translateY(-50%);
+    width: 25px;
+    height: 18px;
+    background: url('https://flagcdn.com/w40/ng.png') no-repeat center center;
+    background-size: cover;
+    pointer-events: none; /* Prevents interference with input clicks */
+}
+.wp2pr_nigeria_flag{
+    position: absolute;
+    right: 35px; /* Moves the flag to the right side */
+    top: 70%;
+    transform: translateY(-50%);
+    width: 25px;
+    height: 18px;
+    background: url('https://flagcdn.com/w40/ng.png') no-repeat center center;
+    background-size: cover;
+    pointer-events: none; /* Prevents interference with input clicks */
+}
+
+/* Adjust for screens smaller than 1300px */
+/* Responsive adjustments */
+@media (max-width: 1300px) {
+    .p2p_nigeria_flag {
+        right: 10px; /* Adjust for smaller screens */
+        width: 20px;
+        height: 14px;
+    }
+    .wp2pr_nigeria_flag {
+        right: 10px; /* Adjust for smaller screens */
+        width: 20px;
+        height: 14px;
+    }
+    .p2pr_nigeria_flag {
+        right: 10px; /* Adjust for smaller screens */
+        width: 20px;
+        height: 14px;
+    }
+    .wp2p_nigeria_flag {
+        right: 10px; /* Adjust for smaller screens */
+        width: 20px;
+        height: 14px;
+    }
+    .mer_nigeria_flag {
+        right: 10px; /* Adjust for smaller screens */
+        width: 20px;
+        height: 14px;
+    }
+    .del_nigeria_flag {
+        right: 10px; /* Adjust for smaller screens */
+        width: 20px;
+        height: 14px;
+    }
+    .nigeria-flag {
+        right: 10px; /* Adjust for smaller screens */
+        width: 20px;
+        height: 14px;
+    }
+}
+
+@media (max-width: 768px) {
+    .p2p_nigeria_flag {
+        right: 5px;
+        width: 18px;
+        height: 12px;
+    }
+    .wp2pr_nigeria_flag {
+        right: 5px;
+        width: 18px;
+        height: 12px;
+    }
+    .p2pr_nigeria_flag {
+        right: 5px;
+        width: 18px;
+        height: 12px;
+    }
+    .wp2p_nigeria_flag {
+        right: 5px;
+        width: 18px;
+        height: 12px;
+    }
+    .mer_nigeria_flag {
+        right: 5px;
+        width: 18px;
+        height: 12px;
+    }
+    .del_nigeria_flag {
+        right: 5px;
+        width: 18px;
+        height: 12px;
+    }
+    .nigeria-flag {
+        right: 5px;
+        width: 18px;
+        height: 12px;
+    }
+}
+.form-group {
+    position: relative; /* Ensures flag is positioned relative to input */
+    display: flex;
+    flex-direction: column;
+}
