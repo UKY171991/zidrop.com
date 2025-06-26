@@ -46,29 +46,48 @@
                                     <form role="form" action="{{ url('editor/api_info/store') }}" method="POST"
                                         enctype="multipart/form-data">
                                         @csrf
-                                        <div class="card-body">
-
-                                            <div class="form-group">
+                                        <div class="card-body">                                            <div class="form-group">
                                                 <label for="secret">Secret Key</label>
-                                                <input type="text"
-                                                    class="form-control {{ $errors->has('secret') ? ' is-invalid' : '' }}"
-                                                    value="{{ $api_info->secret ?? '' }}" name="secret" id="secret">
+                                                <div class="input-group">
+                                                    <input type="password"
+                                                        class="form-control {{ $errors->has('secret') ? ' is-invalid' : '' }}"
+                                                        value="{{ $api_info->secret ?? '' }}" name="secret" id="secret"
+                                                        placeholder="{{ isset($api_info->secret_display) ? $api_info->secret_display : 'Enter secret key' }}">
+                                                    <!-- <div class="input-group-append">
+                                                        <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('secret')">
+                                                            <i class="fa fa-eye" id="secret-icon"></i>
+                                                        </button>
+                                                    </div> -->
+                                                </div>
                                                 @if ($errors->has('secret'))
                                                     <span class="invalid-feedback" role="alert">
                                                         <strong>{{ $errors->first('secret') }}</strong>
                                                     </span>
                                                 @endif
-                                            </div>
-                                            <!-- form group -->
+                                                @if(isset($api_info->secret_display))
+                                                    <small class="text-muted">Current value: {{ $api_info->secret_display }}</small>
+                                                @endif
+                                            </div>                                            <!-- form group -->
                                             <div class="form-group">
                                                 <label for="public">Public Key</label>
-                                                <input type="text"
-                                                    class="form-control {{ $errors->has('public') ? ' is-invalid' : '' }}"
-                                                    value="{{ $api_info->public ?? '' }}" name="public" id="public">
+                                                <div class="input-group">
+                                                    <input type="password"
+                                                        class="form-control {{ $errors->has('public') ? ' is-invalid' : '' }}"
+                                                        value="{{ $api_info->public ?? '' }}" name="public" id="public"
+                                                        placeholder="{{ isset($api_info->public_display) ? $api_info->public_display : 'Enter public key' }}">
+                                                    <!-- <div class="input-group-append">
+                                                        <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('public')">
+                                                            <i class="fa fa-eye" id="public-icon"></i>
+                                                        </button>
+                                                    </div> -->
+                                                </div>
                                                 @if ($errors->has('public'))
                                                     <span class="invalid-feedback" role="alert">
                                                         <strong>{{ $errors->first('public') }}</strong>
                                                     </span>
+                                                @endif
+                                                @if(isset($api_info->public_display))
+                                                    <small class="text-muted">Current value: {{ $api_info->public_display }}</small>
                                                 @endif
                                             </div>
                                             <div class="form-group float-right">
@@ -87,7 +106,36 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </div>        </div>
     </section>
+
+    <script>
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const icon = document.getElementById(fieldId + '-icon');
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                field.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+        
+        // Clear placeholder when user starts typing
+        document.getElementById('secret').addEventListener('focus', function() {
+            if (this.value === '') {
+                this.placeholder = '';
+            }
+        });
+        
+        document.getElementById('public').addEventListener('focus', function() {
+            if (this.value === '') {
+                this.placeholder = '';
+            }
+        });
+    </script>
 @endsection

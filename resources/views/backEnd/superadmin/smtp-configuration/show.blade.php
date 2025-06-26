@@ -85,17 +85,29 @@
                                                     </span>
                                                 @endif
                                             </div>
-                                            <!-- form group -->
-
-                                            <div class="form-group">
+                                            <!-- form group -->                                            <div class="form-group">
                                                 <label for="mail_password">Mail Password</label>
-                                                <input type="text"
-                                                       class="form-control {{ $errors->has('mail_password') ? ' is-invalid' : '' }}"
-                                                       value="{{ $smtp_configuration->mail_password ?? '' }}" name="mail_password" id="mail_password" required>
+                                                <div class="input-group">
+                                                    <input type="password"
+                                                           class="form-control {{ $errors->has('mail_password') ? ' is-invalid' : '' }}"
+                                                           value="{{ $smtp_configuration->mail_password ?? '' }}" 
+                                                           name="mail_password" 
+                                                           id="mail_password" 
+                                                           placeholder="{{ isset($smtp_configuration->mail_password_display) ? $smtp_configuration->mail_password_display : 'Enter mail password' }}"
+                                                           required>
+                                                    <!-- <div class="input-group-append">
+                                                        <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('mail_password')">
+                                                            <i class="fa fa-eye" id="mail_password-icon"></i>
+                                                        </button>
+                                                    </div> -->
+                                                </div>
                                                 @if ($errors->has('mail_password'))
                                                     <span class="invalid-feedback" role="alert">
                                                         <strong>{{ $errors->first('mail_password') }}</strong>
                                                     </span>
+                                                @endif
+                                                @if(isset($smtp_configuration->mail_password_display))
+                                                    <small class="text-muted">Current value: {{ $smtp_configuration->mail_password_display }}</small>
                                                 @endif
                                             </div>
                                             <!-- form group -->
@@ -154,7 +166,30 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </div>        </div>
     </section>
+
+    <script>
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const icon = document.getElementById(fieldId + '-icon');
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                field.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+        
+        // Clear placeholder when user starts typing
+        document.getElementById('mail_password').addEventListener('focus', function() {
+            if (this.value === '') {
+                this.placeholder = '';
+            }
+        });
+    </script>
 @endsection

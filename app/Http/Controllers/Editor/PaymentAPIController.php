@@ -10,13 +10,29 @@ use File;
 use Illuminate\Http\Request;
 
 
-class PaymentAPIController extends Controller {
-    public function create_contact_info() {
+class PaymentAPIController extends Controller {    public function create_contact_info() {
         $api_info = $edit_data = Paymentapi::find(1);
+        
+        // Create a masked version for display
+        if ($api_info) {
+            $api_info->secret_display = $api_info->secret ? $this->maskApiKey($api_info->secret) : '';
+            $api_info->public_display = $api_info->public ? $this->maskApiKey($api_info->public) : '';
+        }
+        
         return view('backEnd.api.contact' ,compact('api_info'));
     }
-
-    public function store_contact_info(Request $request) {
+    
+    private function maskApiKey($key) {
+        if (strlen($key) <= 8) {
+            return str_repeat('*', strlen($key));
+        }
+        
+        $start = substr($key, 0, 4);
+        $end = substr($key, -4);
+        $middle = str_repeat('*', strlen($key) - 8);
+        
+        return $start . $middle . $end;
+    }    public function store_contact_info(Request $request) {
         Paymentapi::updateOrCreate(
             [
                 'id' => 1,

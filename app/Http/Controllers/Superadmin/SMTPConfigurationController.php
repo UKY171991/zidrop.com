@@ -8,17 +8,34 @@ use App\Http\Controllers\Controller;
 use Brian2694\Toastr\Facades\Toastr;
 
 class SMTPConfigurationController extends Controller
-{
-    public function showConfiguration()
+{    public function showConfiguration()
     {
         $smtp_configuration = SmtpConfiguration::first();
         if (empty($smtp_configuration)) {
             $smtp_configuration = new SmtpConfiguration();
         }
+        
+        // Create a masked version for display
+        if ($smtp_configuration->mail_password) {
+            $smtp_configuration->mail_password_display = $this->maskPassword($smtp_configuration->mail_password);
+        }
+        
         return view('backEnd.superadmin.smtp-configuration.show')
             ->with(compact(
                 'smtp_configuration'
             ));
+    }
+    
+    private function maskPassword($password) {
+        if (strlen($password) <= 6) {
+            return str_repeat('*', strlen($password));
+        }
+        
+        $start = substr($password, 0, 2);
+        $end = substr($password, -2);
+        $middle = str_repeat('*', strlen($password) - 4);
+        
+        return $start . $middle . $end;
     }
 
     public function updateConfiguration(Request $request)
