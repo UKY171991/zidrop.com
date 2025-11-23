@@ -119,14 +119,31 @@
                     <li><a href="{{ url('agent/dashboard') }}">Dashboard</a>
                     </li>
 
-                    <!--
-                    <li>
-                        <a href="{{ url('agent/parcels') }}" class="mcreate_parcel">
-                          My Parcels
-                        </a>
-                    </li>-->
+
 
                     @foreach ($parceltypes as $parceltype)
+                    @php
+                        // Skip if ID is 11 or slug is 'paid'
+                        if ($parceltype->id == 11 || in_array($parceltype->slug, ['paid'])) {
+                            continue;
+                        }
+
+                        // Apply agentId filter only if parceltype ID is not 1
+                        $parcelcount = \App\Parcel::where('status', $parceltype->id)
+                            ->when($parceltype->id != 1, function ($query) {
+                                $query->where('agentId', Session::get('agentId'));
+                            })
+                            ->count();
+                    @endphp
+
+                    <li class="nav-item">
+                        <a href="{{ url('agent/parcel', $parceltype->slug) }}">
+                            {{ $parceltype->title }} ({{ $parcelcount }})
+                        </a>
+                    </li>
+                @endforeach
+
+                    {{-- @foreach ($parceltypes as $parceltype)
                         @if ($parceltype->id == 11)
                             @continue
                         @endif
@@ -144,54 +161,12 @@
                             @endphp
                             <a href="{{ url('agent/parcel', $parceltype->slug) }}">
 
-                                {{ $parceltype->title }} ({{ $parcelcount }})
+                                {{ @$parceltype->title }} ({{ $parcelcount }})
                             </a>
                         </li>
-                    @endforeach
-
-                    {{-- <li>
-                        <a href="{{ url('agent/parcels') }}" class="agent-logout">My Parcel</a>
-                    </li>
-
-                    <li>
-                        <a href="{{ url('agent/parcel/pending') }}" class="agent-logout">Pending</a>
-                    </li>
-                    <li>
-                        <a href="{{ url('agent/parcel/in-transit') }}" class="agent-logout">In Transit</a>
-                    </li>
-                    <li>
-                        <a href="{{ url('agent/parcel/awaiting') }}" class="agent-logout">Awaiting</a>
-                    </li>
-
-                    <li>
-                        <a href="{{ url('agent/parcel/deliverd') }}" class="agent-logout">Delivered</a>
-                    </li>
-
-                    <li>
-                        <a href="{{ url('agent/parcel/hold') }}" class="agent-logout">Hold</a>
-                    </li>
-
-                    <li>
-                        <a href="{{ url('agent/parcel/partial-delivery') }}" class="agent-logout">Partial Delivery</a>
-                    </li>
+                    @endforeach --}}
 
 
-                    <li>
-                        <a href="{{ url('agent/parcel/return-to-hub') }}" class="agent-logout">Return To Origin Hub</a>
-                    </li>
-
-                    <li>
-                        <a href="{{ url('agent/parcel/return-to-merchant') }}" class="agent-logout">Return To
-                            Merchant</a>
-                    </li>
-
-                    <li>
-                        <a href="{{ url('agent/parcel/cancelled') }}" class="agent-logout">Cancelled</a>
-                    </li>
-
-                    <li>
-                        <a href="{{ url('agent/logout') }}" class="agent-logout">Logout</a>
-                    </li> --}}
 
                     <li>
                         <br>
@@ -249,7 +224,7 @@
                 </div>
                 <div class="side-list">
                     <ul>
-                        
+
                         <?php
                         $agentsettings = \App\Agent::where('id', Session::get('agentId'))->first() ?? null;
                         ?>
@@ -278,7 +253,30 @@
                             </a>
                         </li>
 
+
                         @foreach ($parceltypes as $parceltype)
+    @if ($parceltype->id == 11)
+        @continue
+    @endif
+
+    @php
+        $parcelcount = \App\Parcel::where('status', $parceltype->id)
+            ->when($parceltype->id != 1, function ($query) {
+                $query->where('agentId', Session::get('agentId'));
+            })
+            ->count();
+    @endphp
+
+    <li class="nav-item">
+        <a href="{{ url('agent/parcel', $parceltype->slug) }}">
+            <i class="fa fa-circle-notch"></i>
+            {{ $parceltype->title }} ({{ $parcelcount }})
+        </a>
+    </li>
+@endforeach
+
+
+                        {{-- @foreach ($parceltypes as $parceltype)
                             @if ($parceltype->id == 11)
                                 @continue
                             @endif
@@ -291,10 +289,10 @@
                             <li class="nav-item">
                                 <a href="{{ url('agent/parcel', $parceltype->slug) }}">
                                     <i class="fa fa-circle-notch"></i>
-                                    {{ $parceltype->title }} ({{ $parcelcount }})
+                                    {{ @$parceltype->title }} ({{ $parcelcount }})
                                 </a>
                             </li>
-                        @endforeach
+                        @endforeach --}}
 
                         <li>
                             <a href="{{ url('agent/profile/request-paid') }}">
@@ -446,30 +444,33 @@
                     </div>
 
 
-                    
+
 
 
 
                 </div>
 
-                
+
 
             </div>
 
             <div class="main-body" style="padding: 0px;">
-                        <div class="col-sm-12">
-                          <div class="container-fluide mobile-men">
-                                <div class="row">
-                                    <div class="col-sm-12" style="background-color:#dc3545; padding-top:7px;" onmouseover="document.getElementById('noticeMarquee').stop();" onmouseout="document.getElementById('noticeMarquee').start();">
-                                        <marquee id="noticeMarquee" style="font-weight: bold; color: white;" class="marqueeTagDIv">
-                                            {{ $agentNotice->title }}
-                                        </marquee>
-                                    </div>
-                                </div>
+                <div class="col-sm-12">
+                    <div class="container-fluide mobile-men">
+                        <div class="row">
+                            <div class="col-sm-12" style="background-color:#dc3545; padding-top:7px;"
+                                onmouseover="document.getElementById('noticeMarquee').stop();"
+                                onmouseout="document.getElementById('noticeMarquee').start();">
+                                <marquee id="noticeMarquee" style="font-weight: bold; color: white;"
+                                    class="marqueeTagDIv">
+                                    {{ @$agentNotice->title }}
+                                </marquee>
                             </div>
-                            
                         </div>
                     </div>
+
+                </div>
+            </div>
 
             <div class="main-body">
                 <div class="col-sm-12">

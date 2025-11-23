@@ -16,7 +16,7 @@ class MerchantSubscriptionEmail extends Mailable
     private $person;
     private $merchantSubscriptions;
 
-    public function __construct($merchant, $plan, $history, $person, $merchantSubscriptions)
+    public function __construct($merchant, $plan, $history = null, $person, $merchantSubscriptions)
     {
         $this->merchant = $merchant;
         $this->plan = $plan;

@@ -788,6 +788,47 @@
                 </div>
             </div>
         </div>
+         {{-- Pick up modal --}}
+        <div class="modal fade" id="PickedUpUpdateModal" tabindex="-1" role="dialog" aria-labelledby="modelTitleId"
+            aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Select The Pickup Hub</h5>
+                    </div>
+                    <div class="modal-body">
+                        <form action="{{ route('agentparcel.singlestatusupdate') }}" method="POST">
+                            @csrf
+                            @php
+                                $agentId = Session::get('agentId');
+                            @endphp
+                            <input type="hidden" name="pu_parcel_id" value="" id="pu_parcel_id">
+                            <div class="form-group">
+                                <select name="agentId" class="bulkselect form-control" required="required">
+                                    <option value="">Select Hub</option>
+                                    @foreach ($agents as $agent)
+                                        <option value="{{ $agent->id }}" >
+                                            {{ $agent->name }}</option>
+                                    @endforeach
+
+                                </select>
+
+                                @error('agentId')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="form-group">
+                                <button type="submit" class="btn btn-success">Update</button>
+                            </div>
+                            <!-- form group end -->
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         {{-- Return To Origin Hub modal --}}
         <div class="modal fade" id="ReturnToHubModal" tabindex="-1" role="dialog" aria-labelledby="modelTitleId"
             aria-hidden="true">
@@ -905,60 +946,60 @@
             });
 
             $(document).ready(function(event) {
-                $('#PickedUpUpdate').click(function(event) {
-                    event.preventDefault();
-                    var parcels = [];
-                    var slug = "picked_up";
-                    $(':checkbox:checked').each(function(i) {
-                        var value = $(this).val();
-                        if (value == 'on') { // Use '===' for comparison
-                            return;
-                        } else {
-                            parcels[i] = value;
-                        }
-                    });
-                    console.log(parcels);
-                    if (parcels.length === 0) {
-                        alert('Alert:: Please select minimum 1 parcel');
-                    } else {
-                        // Show spinner
-                        $('#spinner').show();
+                // $('#PickedUpUpdate').click(function(event) {
+                //     event.preventDefault();
+                //     var parcels = [];
+                //     var slug = "picked_up";
+                //     $(':checkbox:checked').each(function(i) {
+                //         var value = $(this).val();
+                //         if (value == 'on') { // Use '===' for comparison
+                //             return;
+                //         } else {
+                //             parcels[i] = value;
+                //         }
+                //     });
+                //     console.log(parcels);
+                //     if (parcels.length === 0) {
+                //         alert('Alert:: Please select minimum 1 parcel');
+                //     } else {
+                //         // Show spinner
+                //         $('#spinner').show();
 
-                        // AJAX call
-                        $.ajax({
-                            type: 'POST',
-                            url: "{{ route('agentparcel.singlestatusupdate') }}",
-                            dataType: 'JSON',
-                            data: {
-                                parcels: parcels,
-                                slug: slug,
-                                _token: '{{ csrf_token() }}' // Include CSRF token
-                            },
-                            success: function(results) {
-                                if (results.success === true) {
-                                    // Show toastr success message for 2 seconds
-                                    toastr.success('Parcel has been picked up', '', {
-                                        timeOut: 2000
-                                    });
-                                    // Reload the page after 2 seconds
-                                    setTimeout(function() {
-                                        location.reload();
-                                    }, 700);
-                                } else {
-                                    console.log(results.message); // Use results instead of response
-                                }
-                            },
-                            error: function() {
-                                // Handle error
-                                alert('An error occurred. Please try again.');
-                            },
-                            complete: function() {
-                                // Hide spinner
-                                $('#spinner').hide();
-                            }
-                        });
-                    }
-                });
+                //         // AJAX call
+                //         $.ajax({
+                //             type: 'POST',
+                //             url: "{{ route('agentparcel.singlestatusupdate') }}",
+                //             dataType: 'JSON',
+                //             data: {
+                //                 parcels: parcels,
+                //                 slug: slug,
+                //                 _token: '{{ csrf_token() }}' // Include CSRF token
+                //             },
+                //             success: function(results) {
+                //                 if (results.success === true) {
+                //                     // Show toastr success message for 2 seconds
+                //                     toastr.success('Parcel has been picked up', '', {
+                //                         timeOut: 2000
+                //                     });
+                //                     // Reload the page after 2 seconds
+                //                     setTimeout(function() {
+                //                         location.reload();
+                //                     }, 700);
+                //                 } else {
+                //                     console.log(results.message); // Use results instead of response
+                //                 }
+                //             },
+                //             error: function() {
+                //                 // Handle error
+                //                 alert('An error occurred. Please try again.');
+                //             },
+                //             complete: function() {
+                //                 // Hide spinner
+                //                 $('#spinner').hide();
+                //             }
+                //         });
+                //     }
+                // });
 
                 $('#PrintSelectedItemsInvoice').click(function(event) {
                     event.preventDefault();
@@ -1644,6 +1685,27 @@
                     } else {
                         $('#parcels_id').val(parcels);
                         jQuery('#TransferToHubModal').modal('show');
+                    }
+                });
+
+                // Picked Up Action
+                $('#PickedUpUpdate').click(function(event) {
+                    event.preventDefault();
+                    var parcels = [];
+                    $(':checkbox:checked').each(function(i) {
+                        var value = $(this).val();
+                        if (value == 'on') { // Use '===' for comparison
+                            return;
+                        } else {
+                            parcels[i] = value;
+                        }
+                    });
+                    console.log(parcels);
+                    if (parcels.length === 0) {
+                        alert('Alert:: Please select minimum 1 parcel');
+                    } else {
+                        $('#pu_parcel_id').val(parcels);
+                        jQuery('#PickedUpUpdateModal').modal('show');
                     }
                 });
 

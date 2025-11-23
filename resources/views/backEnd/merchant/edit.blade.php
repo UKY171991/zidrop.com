@@ -1,5 +1,8 @@
 @extends('backEnd.layouts.master')
 @section('title', 'Edit Merchant Profile')
+@section('extracss')
+    <link rel="stylesheet" href="{{ asset('frontEnd/css/packages.css') }}">
+@endsection
 @section('content')
     <!-- Main content -->
     <section class="content">
@@ -41,6 +44,9 @@
                                                             href="#paymentmethod">Payment Method</a>
                                                         <a class="nav-item nav-link" data-toggle="tab"
                                                             href="#bankaccount">Bank Account</a>
+                                                        <a class="nav-item nav-link" data-toggle="tab"
+                                                            href="#subscriptions">Subscriptions</a>
+
                                                         {{-- <a class="nav-item nav-link" data-toggle="tab" href="#otheraccount">Other Account</a> --}}
                                                     </div>
                                                 </nav>
@@ -90,10 +96,11 @@
                                                                             <p>Mobile Number</p>
                                                                         </div>
                                                                         <div class="col-sm-3">
-                                                                            <input type="text" name="phoneNumber" id="phoneNumber"
+                                                                            <input type="text" name="phoneNumber"
+                                                                                id="phoneNumber"
                                                                                 value="{{ $merchantInfo->phoneNumber }}"
                                                                                 class="form-control pr-5">
-                                                                                <div class="mer_nigeria_flag"></div>
+                                                                            <div class="mer_nigeria_flag"></div>
                                                                         </div>
                                                                     </div>
                                                                     <div class="form-group row">
@@ -119,22 +126,32 @@
                                                                         </div>
                                                                     </div>
                                                                     <div class="form-group row">
-                                                                      <div class="custom-control custom-switch">
-                                                                        <input type="checkbox" class="custom-control-input"
-                                                                            id="ins_cal_permission" name="ins_cal_permission"
-                                                                            value="{{ $merchantInfo->ins_cal_permission}}" {{ $merchantInfo->ins_cal_permission == 1 ? 'checked' : '' }}>
-                                                                        <label class="custom-control-label"
-                                                                            for="ins_cal_permission">Insurance Calculation Permission</label>
-                                                                      </div>
+                                                                        <div class="custom-control custom-switch">
+                                                                            <input type="checkbox"
+                                                                                class="custom-control-input"
+                                                                                id="ins_cal_permission"
+                                                                                name="ins_cal_permission"
+                                                                                value="{{ $merchantInfo->ins_cal_permission }}"
+                                                                                {{ $merchantInfo->ins_cal_permission == 1 ? 'checked' : '' }} disabled >
+                                                                                <input type="hidden" name="ins_cal_permission" value="{{ $merchantInfo->ins_cal_permission }}">
+                                                                            <label class="custom-control-label"
+                                                                                for="ins_cal_permission">Insurance
+                                                                                Calculation Permission</label>
+                                                                        </div>
                                                                     </div>
                                                                     <div class="form-group row">
-                                                                      <div class="custom-control custom-switch">
-                                                                        <input type="checkbox" class="custom-control-input"
-                                                                            id="cod_cal_permission" name="cod_cal_permission"
-                                                                            value="{{ $merchantInfo->cod_cal_permission}}" {{ $merchantInfo->cod_cal_permission == 1 ? 'checked' : '' }}>
-                                                                        <label class="custom-control-label"
-                                                                            for="cod_cal_permission">COD Calculation Permission</label>
-                                                                      </div>
+                                                                        <div class="custom-control custom-switch">
+                                                                            <input type="checkbox"
+                                                                                class="custom-control-input"
+                                                                                id="cod_cal_permission"
+                                                                                name="cod_cal_permission"
+                                                                                value="{{ $merchantInfo->cod_cal_permission }}"
+                                                                                {{ $merchantInfo->cod_cal_permission == 1 ? 'checked' : '' }} disabled>
+                                                                                        <input type="hidden" name="cod_cal_permission" value="{{ $merchantInfo->cod_cal_permission }}">
+                                                                            <label class="custom-control-label"
+                                                                                for="cod_cal_permission">COD Calculation
+                                                                                Permission</label>
+                                                                        </div>
                                                                     </div>
                                                                     <div class="form-group row">
                                                                         <div class="col-sm-3">
@@ -295,54 +312,278 @@
                                                             </div>
                                                             <!-- form-group end -->
                                                         </div>
-                                                        {{-- <div class="tab-pane fade " id="otheraccount" role="tabpanel">
-                                                            <p class="title">Other Account</p>
-                                                            <div class="form-group row">
-                                                                <div class="col-sm-3">
-                                                                    <p>Bkash</p>
-                                                                </div>
-                                                                <div class="col-sm-3"><input type="text"
-                                                                        name="bkashNumber"
-                                                                        value="{{ $merchantInfo->bkashNumber }}"
-                                                                        class="form-control"></div>
-                                                            </div>
-                                                            <div class="form-group row">
-                                                                <div class="col-sm-3">
-                                                                    <p>Roket</p>
-                                                                </div>
-                                                                <div class="col-sm-3"><input type="text"
-                                                                        name="roketNumber"
-                                                                        value="{{ $merchantInfo->roketNumber }}"
-                                                                        class="form-control"></div>
-                                                            </div>
-                                                            <div class="form-group row">
-                                                                <div class="col-sm-3">
-                                                                    <p>Nogod</p>
-                                                                </div>
-                                                                <div class="col-sm-3"><input type="text"
-                                                                        name="nogodNumber"
-                                                                        value="{{ $merchantInfo->nogodNumber }}"
-                                                                        class="form-control"></div>
-                                                            </div>
-                                                            <div class="form-group row">
-                                                                <div class="col-sm-3">
-                                                                    <p></p>
-                                                                </div>
-                                                                <div class="col-sm-3"><input type="submit"
-                                                                        value="Update"class="common-btn"></div>
-                                                            </div>
-                                                        </div> --}}
-                                                    </div>
+
+
                                                 </form>
+                                                <div class="tab-pane fade text-center" id="subscriptions"
+                                                    role="tabpanel">
+                                                    {{-- <h3 class="title mb-5">Subscription Plan</h3> --}}
+                                                    <form
+                                                        action="{{ url('author/merchant/subscription/activation', $merchantInfo->id) }}"
+                                                        id="shipping-form" method="POST">
+                                                        @csrf
+                                                        <input type="hidden" name="subs_plan_id" id="subs_plan_id">
+                                                        <div class="pricing-section innerSubs">
+                                                            <div class="row">
+                                                                <div class="col-md-6">
+                                                                    <div class="pricing-card">
+                                                                        <h3 class="card-title text-left">Business Starter
+                                                                        </h3>
+                                                                        <div class="price-container text-left">
+                                                                            <div class="mb-3">
+                                                                            </div>
+                                                                            <div class="price-block text-left">
+                                                                                <span class="currency">₦</span>
+                                                                                <span class="amount">20,000</span>
+                                                                                <span class="duration">/mo</span>
+                                                                                <span class="pk_crd_sh">Save 10%</span>
+
+                                                                            </div>
+                                                                        </div>
+                                                                        @if (@$activeSubPlan->subs_pkg_id == 1)
+                                                                            <a href="{{ url('author/merchant/subs/disable/' . $activeSubPlan->subs_pkg_id . '/' . $merchantInfo->id) }}"
+                                                                                class="choose-plan-button btn_emp show_confirm2"
+                                                                                id="MerchantSubscriptionDisable2"
+                                                                                data-plan="1" data-amount="20000">Disable
+                                                                                Plan</a>
+                                                                        @else
+                                                                            <button type="submit"
+                                                                                class="choose-plan-button btn_emp show_confirm"
+                                                                                id="MerchantSubscriptionSubmit"
+                                                                                data-plan="1" data-amount="20000">Choose
+                                                                                plan</button>
+                                                                        @endif
+
+                                                                        <p class="renewal-info">Renews at NGN 20,000/mo.
+                                                                            Cancel anytime.</p>
+                                                                        <hr class="hr_line">
+                                                                        <ul class="feature-list">
+                                                                            <li class="feature-item">
+                                                                                <span class="feature-icon">&#10004;</span>
+                                                                                <span class="feature-text "><b>10%</b>
+                                                                                    discount on shipping charges</span>
+                                                                            </li>
+                                                                            <li class="feature-item">
+                                                                                <span class="feature-icon">&#10004;</span>
+                                                                                <span class="feature-text">Priority
+                                                                                    Shipping</span>
+                                                                            </li>
+                                                                            <li class="feature-item">
+                                                                                <span class="feature-icon">&#10004;</span>
+                                                                                <span class="feature-text">No
+                                                                                    Charges on COD (Cash on
+                                                                                    Delivery)</span>
+                                                                            </li>
+                                                                            <li class="feature-item ">
+                                                                                <span
+                                                                                    class="feature-icon watermark">&#10006;</span>
+                                                                                <span class="feature-text watermark">Free
+                                                                                    Insurance cover</span>
+                                                                            </li>
+                                                                            <li class="feature-item ">
+                                                                                <span
+                                                                                    class="feature-icon watermark">&#10006;</span>
+                                                                                <span class="feature-text watermark">A
+                                                                                    dedicated account
+                                                                                    officer</span>
+                                                                            </li>
+                                                                            <li class="feature-item ">
+                                                                                <span
+                                                                                    class="feature-icon watermark">&#10006;</span>
+                                                                                <span class="feature-text watermark">Free
+                                                                                    Bulk Pick Up for
+                                                                                    Interstate delivery</span>
+                                                                            </li>
+                                                                            <li class="feature-item ">
+                                                                                <span
+                                                                                    class="feature-icon watermark">&#10006;</span>
+                                                                                <span class="feature-text watermark">
+                                                                                    E-commerce business growth kit</span>
+                                                                            </li>
+                                                                            <li class="feature-item">
+                                                                                <span
+                                                                                    class="feature-icon watermark">&#10006;</span>
+                                                                                <span class="feature-text watermark">
+                                                                                    Facebook
+                                                                                    Ad Troubleshooting Help</span>
+                                                                            </li>
+                                                                            <li class="feature-item">
+                                                                                <span
+                                                                                    class="feature-icon watermark">&#10006;</span>
+                                                                                <span class="feature-text watermark"> Media
+                                                                                    Visibility and business growth</span>
+                                                                            </li>
+                                                                            <li class="feature-item text-left">
+                                                                                <span
+                                                                                    class="feature-icon watermark">&#10006;</span>
+                                                                                <span class="feature-text watermark"> Free
+                                                                                    Reverse logistics (handling returns and
+                                                                                    exchanges)</span>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-6">
+                                                                    <div class="popular-badge">MOST POPULAR</div>
+                                                                    <div class="pricing-card most-popular">
+                                                                        <h3 class="card-title text-left pt-1">Business
+                                                                            Premium</h3>
+                                                                        <div class="price-container text-left">
+                                                                            <div class="mb-3">
+                                                                            </div>
+                                                                            <div class="price-block text-left">
+                                                                                <span class="currency">₦</span>
+                                                                                <span class="amount">199,000</span>
+                                                                                <span class="duration">/mo</span>
+                                                                                <span class="pk_crd_sh">Save 20%</span>
+                                                                            </div>
+                                                                        </div>
+                                                                        @if (@$activeSubPlan->subs_pkg_id == 2)
+                                                                            <a href="{{ url('author/merchant/subs/disable/' . $activeSubPlan->subs_pkg_id . '/' . $merchantInfo->id) }}"
+                                                                                class="choose-plan-button primary show_confirm2"
+                                                                                id="MerchantSubscriptionDisable2"
+                                                                                data-plan="2"
+                                                                                data-amount="199000">Disable Plan</a>
+                                                                        @else
+                                                                            <button
+                                                                                class="choose-plan-button primary show_confirm"
+                                                                                id="MerchantSubscriptionSubmit2"
+                                                                                data-plan="2" data-amount="199000">Choose
+                                                                                plan</button>
+                                                                        @endif
+
+
+                                                                        <p class="renewal-info">Renews at NGN 199,000/mo.
+                                                                            Cancel anytime.</p>
+                                                                        <hr class="hr_line">
+                                                                        <ul class="feature-list text-left">
+
+                                                                            <li class="feature-item">
+                                                                                <span class="feature-icon">&#10004;</span>
+                                                                                <span class="feature-text "><b>20%</b>
+                                                                                    discount on shipping charges</span>
+                                                                            </li>
+                                                                            <li class="feature-item">
+                                                                                <span class="feature-icon">&#10004;</span>
+                                                                                <span class="feature-text">Priority
+                                                                                    Shipping</span>
+                                                                            </li>
+                                                                            <li class="feature-item">
+                                                                                <span class="feature-icon">&#10004;</span>
+                                                                                <span class="feature-text">No
+                                                                                    Charges on COD (Cash on
+                                                                                    Delivery)</span>
+                                                                            </li>
+                                                                            <li class="feature-item">
+                                                                                <span class="feature-icon">&#10004;</span>
+                                                                                <span class="feature-text">Free
+                                                                                    Insurance cover</span>
+                                                                            </li>
+                                                                            <li class="feature-item">
+                                                                                <span class="feature-icon">&#10004;</span>
+                                                                                <span class="feature-text">A
+                                                                                    dedicated account
+                                                                                    officer</span>
+                                                                            </li>
+                                                                            <li class="feature-item">
+                                                                                <span class="feature-icon">&#10004;</span>
+                                                                                <span class="feature-text">Free
+                                                                                    Bulk Pick Up for
+                                                                                    Interstate delivery</span>
+                                                                            </li>
+                                                                            <li class="feature-item">
+                                                                                <span class="feature-icon">&#10004;</span>
+                                                                                <span class="feature-text">
+                                                                                    E-commerce business growth
+                                                                                    kit</span>
+                                                                            </li>
+                                                                            <li class="feature-item">
+                                                                                <span class="feature-icon">&#10004;</span>
+                                                                                <span class="feature-text">
+                                                                                    Facebook Ad Troubleshooting
+                                                                                    Help</span>
+                                                                            </li>
+                                                                            <li class="feature-item">
+                                                                                <span class="feature-icon">&#10004;</span>
+                                                                                <span class="feature-text">
+                                                                                    Media Visibility and
+                                                                                    business growth</span>
+                                                                            </li>
+                                                                            <li class="feature-item">
+                                                                                <span class="feature-icon">&#10004;</span>
+                                                                                <span class="feature-text">
+                                                                                    Free Reverse logistics
+                                                                                    (handling returns and exchanges)</span>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                      <div class="row">
+                        <h3 class="title mb-2 mt-3">Subscription Plan Activation History</h3>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped" width="100">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">S/N</th>
+                                        <th scope="col">Plan</th>
+                                        <th scope="col">Amount</th>
+                                        <th scope="col">Subscription Date</th>
+                                        <th scope="col">Active Time</th>
+                                        <th scope="col">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($SubsHistos as $key => $value)
+                                        <tr>
+                                            <th>{{ $key + 1 }}</th>
+                                            <td>{{ $value->plan->name ?? 'N/A' }}</td>
+                                            <td>{{ number_format($value->plan->price ?? 0, 2) }}</td>
+                                            <td>{{ $value->formatted_date }}</td>
+                                            <td>{{ $value->formatted_time }}</td>
+                                            <td>
+
+                                                 @if ($value->is_active == 1)
+                                                        <span class="subscription-badge active">
+                                                            ACTIVE
+                                                        </span>
+                                                @else
+                                                        <span class="subscription-badge disable">
+                                                            DISABLED/Expired
+                                                        </span>
+                                                @endif
+
+
+
+                                                {{-- @if ($value->auto_expired == 1)
+                                                    <span class="subscription-badge expired">
+                                                        EXPIRED
+                                                    </span>
+                                                @else --}}
+                                                   
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        {{-- laravel links  --}}
+                        {{-- {{ $SubsHistos->links('pagination::bootstrap-5') }} --}}
+                    </div>
+
+                                                </div>
                                             </div>
                                         </div>
-                                        <!-- row end -->
                                     </div>
+                                    <!-- row end -->
                                 </div>
                             </div>
-                            <!-- col end -->
                         </div>
-                        {{-- <div class="row">
+                        <!-- col end -->
+                    </div>
+                    {{-- <div class="row">
                             <div class="col-lg-12 col-md-12 col-sm-12">
                                 <div class="card card-success">
                                     <div class="card-header">
@@ -407,9 +648,9 @@
                             </div>
                             <!-- col end -->
                         </div> --}}
-                    </div>
                 </div>
             </div>
+        </div>
         </div>
     </section>
 
@@ -422,21 +663,91 @@
 @endsection
 @section('custom_js_scripts')
     <script>
+        $(document).ready(function() {
+            $('#MerchantSubscriptionSubmit2, #MerchantSubscriptionSubmit').on('click', function() {
+                var plantID = $(this).data('plan');
+                $('#subs_plan_id').val(plantID);
+            });
+        });
         $(document.body).ready(function() {
             $('#ins_cal_permission').on('change', function() {
                 if ($(this).is(':checked')) {
                     $(this).val(1);
                 } else {
                     $(this).val(0);
-                } 
+                }
             });
             $('#cod_cal_permission').on('change', function() {
                 if ($(this).is(':checked')) {
                     $(this).val(1);
                 } else {
                     $(this).val(0);
-                } 
+                }
             });
         });
     </script>
+
+
+    {{-- Sweet Alert --}}
+    <!-- SweetAlert Script -->
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.show_confirm').forEach(function(element) {
+                element.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    const form = this.closest('form');
+
+                    swal({
+                        title: "Are you sure?",
+                        text: "You are about to activate this plan. This action cannot be undone.",
+                        icon: "warning",
+                        buttons: {
+                            cancel: {
+                                text: "Cancel",
+                                visible: true,
+                                className: "btn-secondary"
+                            },
+                            confirm: {
+                                text: "Yes, Activate it!",
+                                visible: true,
+                                className: "btn-danger"
+                            }
+                        },
+                        dangerMode: true
+                    }).then((willSubmit) => {
+                        if (willSubmit) {
+                            form.submit();
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+    <script type="text/javascript">
+       document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.show_confirm2').forEach(function (el) {
+        el.addEventListener('click', function (e) {
+            e.preventDefault(); // prevent direct link click
+
+            const link = this.getAttribute('href');
+
+            swal({
+                title: "Are you sure?",
+                text: "This will disable the subscription plan.",
+                icon: "warning",
+                buttons: ["Cancel", "Yes, disable it!"],
+                dangerMode: true,
+            }).then((willDisable) => {
+                if (willDisable) {
+                    window.location.href = link; // manually go to the URL
+                }
+            });
+        });
+    });
+});
+    </script>
+
 @endsection

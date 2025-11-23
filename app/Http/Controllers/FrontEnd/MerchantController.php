@@ -28,13 +28,16 @@ use App\RemainTopup;
 use Brian2694\Toastr\Facades\Toastr;
 use DB;
 use File;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Session;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MerchantController extends Controller
 {
@@ -569,6 +572,236 @@ class MerchantController extends Controller
         return view('frontEnd.layouts.pages.merchant.parcelcreate', compact('delivery', 'merchantDetails', 'merchantSubsPlan'));
     }
 
+     public function parcelbulkupload()
+    {
+
+        return view('frontEnd.layouts.pages.merchant.parcelbulkupload');
+    }
+     public function bulkimporttemplate(): StreamedResponse
+    {
+        // Option A: serve a static file placed in storage/app/templates/parcel_template.csv
+        // return Storage::download('templates/parcel_template.csv');
+
+        // Option B: stream on the fly so you never keep a copy on disk
+        $headings = [
+            'CustomerName(*)', 'ProductName(*)',
+            'PickupCity', 'PickupTown',
+            'DeliveryCity', 'DeliveryTown',
+            'ParcelType', 'PhoneNumber(*)',
+            'PaymentType', 'CashCollectionAmount(*)',
+            'PackageValue(*)', 'OrderNumber(*)',
+            'ProductColor(*)', 'Weight(*)', 'ProductQty(*)',
+            'DeliveryAddress(*)', 'Note(*)'
+        ];
+
+        $callback = fn() => fopen('php://output', 'w') && fputcsv($stdout = fopen('php://output', 'w'), $headings);
+        return response()->streamDownload($callback,'parcel_template.csv',['Content-Type' => 'text/csv']);
+    }
+    public function postbulkimport(Request $request)
+    {
+        /* -----------------------------------------------------------------
+           1.  Decode & filter blank rows (extra safety)
+        ----------------------------------------------------------------- */
+        $rows = collect(json_decode($request->input('payload', '[]'), true))
+                ->filter(fn ($r) => collect($r)->except('rownum')
+                         ->filter()->isNotEmpty())
+                ->values();
+
+        if ($rows->isEmpty()) {
+            return back()->withErrors('Nothing to import — sheet was blank.')
+                         ->withInput();
+        }
+
+        /* -----------------------------------------------------------------
+           2.  Fetch merchant & (optionally) subscription once
+        ----------------------------------------------------------------- */
+        $merchant = Merchant::findOrFail(Session::get('merchantId'));
+        $activeSubPlan = MerchantSubscriptions::with('plan')
+                            ->where('merchant_id', $merchant->id)
+                            ->where('is_active', 1)
+                            ->first();
+
+        /* -----------------------------------------------------------------
+           3.  Per‑row validation rules    (same fields as single form)
+        ----------------------------------------------------------------- */
+        $rules = [
+            'percelType'     => 'required|in:1,2,3',
+            'name'           => 'required|string|max:100',
+            'order_number'   => 'required|string|max:100',
+            'address'        => 'required|string',
+            'phonenumber'    => 'required|string|max:20',
+            'productName'    => 'required|string|max:255',
+            'productQty'     => 'required|integer|min:1',
+            'cod'            => 'required|numeric|min:0',
+            'payment_option' => 'required|in:1,2',
+            'weight'         => 'required|numeric|min:1',
+            'note'           => 'nullable|string',
+            'pickuptown'     => 'required|integer|exists:towns,id',
+            'pickupcity'     => 'required|integer|exists:cities,id',
+            'deliverycity'   => 'required|integer|exists:cities,id',
+            'deliverytown'   => 'required|integer|exists:towns,id',
+        ];
+
+        /* collect row‑level errors so we can report them all at once */
+        $rowErrors = [];
+
+        /* -----------------------------------------------------------------
+           4.  Main DB transaction  (everything rolls back if ANY row fails)
+        ----------------------------------------------------------------- */
+        DB::beginTransaction();
+        // try {
+
+            foreach ($rows as $index => $row) {
+
+                /* ---- validate this row ---- */
+                $v = Validator::make($row, $rules);
+                if ($v->fails()) {
+                    $rowErrors[$index + 1] = $v->errors()->all(); // +1 for human row #
+                    continue;            // skip processing but keep validating others
+                }
+
+                /* ---- all helpers your single function uses ---- */
+                $charge = \App\ChargeTarif::where('pickup_cities_id', $row['pickupcity'])
+                           ->where('delivery_cities_id', $row['deliverycity'])
+                           ->firstOrFail();
+
+                $town   = \App\Town::where('id', $row['deliverytown'])
+                           ->where('cities_id', $row['deliverycity'])
+                           ->firstOrFail();
+
+                $codAmt     = $row['cod']            ? remove_commas($row['cod'])            : 0;
+                $packageAmt = $row['package_value']  ?? 0;
+                $weight     = $row['weight'] >= 1    ? $row['weight']                       : 1;
+
+                /* delivery charge */
+                $extraWeight     = $weight - 1;
+                $deliverycharge  = ($charge->deliverycharge + $town->towncharge)
+                                 + ($extraWeight > 0 ? $extraWeight * $charge->extradeliverycharge : 0);
+
+                /* subscription discount */
+                if ($activeSubPlan && $activeSubPlan->plan->del_crg_discount_percentage) {
+                    $pct = $activeSubPlan->plan->del_crg_discount_percentage;
+                    $pct = $pct > 1 ? $pct / 100 : $pct;
+                    $deliverycharge -= round($deliverycharge * $pct, 2);
+                }
+
+                /* tax */
+                $tax = round($deliverycharge * $charge->tax / 100, 2);
+                // dd($deliverycharge,$tax);
+
+                /* COD / insurance / merchant amounts */
+                if ($row['payment_option'] == 2) {             // pay on delivery (COD)
+                    $insurance = round($codAmt * $charge->insurance / 100, 2);
+                    if ($merchant->ins_cal_permission == 0 ||
+                       ($activeSubPlan && $activeSubPlan->plan->insurance_permission == 0)) {
+                        $insurance = 0;
+                    }
+
+                    $codcharge = round($codAmt * $charge->codcharge / 100, 2);
+                    if ($merchant->cod_cal_permission == 0 ||
+                       ($activeSubPlan && $activeSubPlan->plan->cod_permission == 0)) {
+                        $codcharge = 0;
+                    }
+
+                    $merchantAmount = $codAmt - ($deliverycharge + $codcharge + $tax + $insurance);
+                    $merchantDue    = $merchantAmount;
+
+                } else {                                  // prepaid
+                    $insurance = round($packageAmt * $charge->insurance / 100, 2);
+                    if ($merchant->ins_cal_permission == 0 ||
+                       ($activeSubPlan && $activeSubPlan->plan->insurance_permission == 0)) {
+                        $insurance = 0;
+                    }
+
+                    $totalDelCharge = $deliverycharge + $tax + $insurance;
+                    if ($merchant->balance < $totalDelCharge) {
+                        $rowErrors[$index + 1][] = 'Wallet balance too low.';
+                        continue;
+                    }
+
+                    $merchant->decrement('balance', $totalDelCharge);
+
+                    $codcharge      = 0;
+                    $merchantAmount = 0;
+                    $merchantDue    = 0;
+                }
+
+                /* ---- create Parcel & related rows ---- */
+                $parcel = Parcel::create([
+                    'invoiceNo'          => $row['invoiceno'] ?? null,
+                    'merchantId'         => $merchant->id,
+                    'cod'                => $codAmt,
+                    'package_value'      => $packageAmt,
+                    'tax'                => $tax,
+                    'insurance'          => $merchant->ins_cal_permission ? $insurance : 0,
+                    'percelType'         => $row['percelType'],
+                    'order_number'       => $row['order_number'],
+                    'payment_option'     => $row['payment_option'],
+                    'recipientName'      => $row['name'],
+                    'recipientAddress'   => $row['address'],
+                    'recipientPhone'     => $row['phonenumber'],
+                    'productWeight'      => $weight,
+                    'trackingCode'       => 'ZD' . mt_rand(1111111111, 9999999999),
+                    'note'               => $row['note'] ?? 'Pending Pickup',
+                    'deliveryCharge'     => $deliverycharge,
+                    'codCharge'          => $merchant->cod_cal_permission ? $codcharge : 0,
+                    'productPrice'       => $row['productPrice'] ?? null,
+                    'productName'        => $row['productName'],
+                    'productQty'         => $row['productQty'],
+                    'productColor'       => $row['productColor'] ?? null,
+                    'merchantAmount'     => $merchantAmount,
+                    'merchantDue'        => $merchantDue,
+                    'pickup_cities_id'   => $row['pickupcity'],
+                    'delivery_cities_id' => $row['deliverycity'],
+                    'pickup_town_id'     => $row['pickuptown'],
+                    'delivery_town_id'   => $row['deliverytown'],
+                    'codType'            => 1,
+                    'status'             => 1,
+                ]);
+
+                if ($row['payment_option'] == 1) {
+                    RemainTopup::create([
+                        'parcel_id'     => $parcel->id,
+                        'parcel_status' => 1,
+                        'merchant_id'   => $merchant->id,
+                        'amount'        => $deliverycharge + $tax + $insurance,
+                    ]);
+                }
+
+                History::create([
+                    'name'      => "Customer: {$parcel->recipientName}<br><b>(Created By:)</b>{$merchant->companyName}",
+                    'parcel_id' => $parcel->id,
+                    'done_by'   => $merchant->companyName,
+                    'status'    => 'Parcel Created By ' . $merchant->companyName,
+                    'note'      => $parcel->note,
+                    'date'      => $parcel->updated_at,
+                ]);
+
+                Parcelnote::create([
+                    'parcelId' => $parcel->id,
+                    'note'     => 'Pending Pickup',
+                ]);
+            }
+
+            /* if any row collected errors, roll back */
+            if (!empty($rowErrors)) {
+                DB::rollBack();
+                return back()
+                       ->withErrors(['import' => $rowErrors])
+                       ->withInput();
+            }
+
+            DB::commit();
+
+        // } catch (\Throwable $e) {
+        //     DB::rollBack();
+        //     return back()->withErrors($e->getMessage())->withInput();
+        // }
+
+        Toastr::success('Success!', "{$rows->count()} parcels imported.");
+        return back();
+    }
+
     public function parcelstore(Request $request)
     {
         $this->validate($request, [
@@ -1003,6 +1236,176 @@ class MerchantController extends Controller
         $parceltype = [];
         return view('frontEnd.layouts.pages.merchant.parcels', compact('allparcel', 'slug', 'parceltype'));
     }
+    // public function get_parcel_dataOld(Request $request, $slug)
+    // {
+       
+    //     $parceltype = Parceltype::where('slug', $slug)->first();
+    //     // Datatable
+    //     $start = 0;
+    //     if (isset($request->start)) {
+    //         $start = $request->start;
+    //     }
+    //     $draw = 0;
+    //     if (isset($request->draw)) {
+    //         $draw = $request->draw;
+    //     }
+    //     $length = 10;
+    //     if (isset($request->length)) {
+    //         $length = $request->length;
+    //     }
+
+    //     $filter = $request->filter_id;
+
+    //     if ($slug == 'all') {
+    //         $query = \App\Parcel::select('*')
+    //             ->with(['pickupcity', 'deliverycity', 'pickuptown', 'deliverytown', 'merchant', 'deliverymen', 'agent', 'parceltype'])
+    //             ->where('merchantId', Session::get('merchantId'))
+    //             ->orderBy('updated_at', 'DESC');
+    //         if ($request->trackId) {
+    //             $query->where('trackingCode', $request->trackId);
+    //         } 
+    //         if ($request->phoneNumber) {
+    //             $phoneNumber = preg_replace('/[\s\-\.\(\)]/', '', $request->phoneNumber); // Remove spaces, dashes, dots, parentheses
+    //             $query->whereRaw("REPLACE(REPLACE(REPLACE(REPLACE(recipientPhone, ' ', ''), '-', ''), '.', ''), '(', '') LIKE ?", ["%{$phoneNumber}%"]);
+    //         }
+    //         if ($request->cname) {
+    //             $query->where('recipientName', 'like', '%' . $request->cname . '%');
+    //         } 
+    //         if ($request->address) {
+    //             $query->where('recipientAddress', $request->address);
+    //         } 
+    //         if ($request->startDate && $request->endDate) {
+    //             $startDate = Carbon::parse($request->startDate)->startOfDay();
+    //             $endDate   = Carbon::parse($request->endDate)->endOfDay();
+    //             $query->whereBetween('created_at', [$startDate, $endDate]);
+    //         }
+    //         if ($request->upstartDate && $request->upendDate) {
+    //             $startDate = Carbon::parse($request->upstartDate)->startOfDay();
+    //             $endDate   = Carbon::parse($request->upendDate)->endOfDay();
+    //             $query->whereBetween('updated_at', [$startDate, $endDate]);
+    //         }
+    //         if ($request->UpStatusArray != null) {
+    //             $query->whereIn('status', $request->UpStatusArray);
+    //         }
+
+    //     } else {
+
+    //         $slug       = $slug;
+    //         $parceltype = Parceltype::where('slug', $slug)->first();
+    //         $query      = \App\Parcel::select('*')
+    //             ->with(['pickupcity', 'deliverycity', 'pickuptown', 'deliverytown', 'merchant', 'deliverymen', 'agent', 'parceltype'])
+    //             ->where('merchantId', Session::get('merchantId'))
+    //             ->where('status', $parceltype->id)
+    //             ->orderBy('updated_at', 'DESC');
+            
+    //         if ($request->trackId) {
+    //             $query->where('trackingCode', $request->trackId);
+    //         }
+
+    //         if ($request->phoneNumber) {
+    //             $phoneNumber = preg_replace('/[\s\-\.\(\)]/', '', $request->phoneNumber);
+    //             $query->whereRaw(
+    //                 "REPLACE(REPLACE(REPLACE(REPLACE(recipientPhone, ' ', ''), '-', ''), '.', ''), '(', '') LIKE ?",
+    //                 ["%{$phoneNumber}%"]
+    //             );
+    //         }
+
+    //         if ($request->cname) {
+    //             $query->where('recipientName', 'like', '%' . $request->cname . '%');
+    //         }
+
+    //         if ($request->address) {
+    //             $query->where('recipientAddress', 'like', '%' . $request->address . '%');
+    //         }
+
+    //         if ($request->startDate && $request->endDate) {
+    //             $startDate = Carbon::parse($request->startDate)->startOfDay();
+    //             $endDate = Carbon::parse($request->endDate)->endOfDay();
+    //             $query->whereBetween('created_at', [$startDate, $endDate]);
+    //         }
+
+    //         if ($request->upstartDate && $request->upendDate) {
+    //             $startDate = Carbon::parse($request->upstartDate)->startOfDay();
+    //             $endDate = Carbon::parse($request->upendDate)->endOfDay();
+    //             $query->whereBetween('updated_at', [$startDate, $endDate]);
+    //         }
+
+    //         if (!empty($request->UpStatusArray)) {
+    //             $query->whereIn('status', $request->UpStatusArray);
+    //         }
+
+    //     }
+    //     $count     = $query->count();
+    //     $allparcel = $query->offset($start)->limit($length)->get();
+
+    //     $aparceltypes = Parceltype::limit(3)->get();
+    //     // Data table
+    //     $data = [
+    //         'draw'            => $draw,
+    //         'recordsTotal'    => $count,
+    //         'recordsFiltered' => $count,
+    //         'data'            => [],
+    //     ];
+
+    //     foreach ($allparcel as $key => $value) {
+    //         $deliverymanInfo = Deliveryman::find($value->deliverymanId);
+    //         $merchantInfo    = Merchant::find($value->merchantId);
+    //         $parcelstatus    = Parceltype::find($value->status);
+    //         $merchantDetails = $value->getMerchantOrSenderDetails();
+
+    //         $datavalue[0] = $value->trackingCode;
+    //         $datavalue[1] = '<ul class="action_buttons cust-action-btn"><li class="m-1"><button class="btn btn-info" href="#" id="merchantParcel" title="View" data-firstname = "' . $merchantDetails->firstName . '" data-order_number = "' . $value->order_number . '" data-lastname = "' . $merchantDetails->lastName . '" data-phonenumber = "' . $merchantDetails->phoneNumber . '" data-emailaddress = "' . $merchantDetails->emailAddress . '" data-companyname = "' . $merchantDetails->companyName . '" data-recipientname = "' . $value->recipientName . '" data-recipientaddress = "' . $value->recipientAddress . '" data-zonename = "' . $value->zonename . '" data-pickup = "' . $value->pickupcity->title . '/' . $value->pickuptown->title . '" data-delivery = "' . $value->deliverycity->title . '/' . $value->deliverytown->title . '" data-title = "' . $value->title . '" data-package_value = "' . number_format($value->package_value, 2) . '" data-cod = "' . number_format($value->cod, 2) . '" data-codcharge = "' . number_format($value->codCharge, 2) . '" data-deliverycharge = "' . number_format($value->deliveryCharge, 2) . '" data-merchantamount = "' . number_format($value->merchantAmount, 2) . '" data-merchantpaid = "' . number_format($value->merchantPaid, 2) . '" data-merchantdue = "' . number_format($value->merchantDue, 2) . '" data-created_at = "' . $value->created_at . '" data-updated_at = "' . $value->updated_at . '" data-tax = "' . number_format($value->tax, 2) . '" data-insurance = "' . number_format($value->insurance, 2) . '"><i class="fa fa-eye"></i></button></li><li class="m-1"><a href="' . url('merchant/parcel/in-details/' . $value->id) . '" class="btn btn-secondary px-3" title="Track"><i class="fa fa-info"></i></a></li>';
+
+    //         if ($value->status == 1) {
+    //             $datavalue[1] .= '<li class="m-1"><a href="' . url('merchant/parcel/edit/' . $value->id) . '" class="btn btn-danger" title="Edit"><i class="fa fa-edit"></i></a></li>';
+    //         }
+    //         $datavalue[1] .= '<li class="m-1"><a class="btn btn-primary" href="' . url('merchant/parcel/invoice/' . $value->id) . '" target="_blank"  title="Invoice"><i class="fas fa-list"></i></a></li></ul>';
+    //         $datavalue[2] = date('F d, Y', strtotime($value->created_at)) . '<br>' . date("g:i a", strtotime($value->created_at));
+    //         $datavalue[3] = $value->recipientName;
+    //         $datavalue[4] = $value->recipientPhone;
+    //         $parcelstatus = \App\Parceltype::find($value->status);
+
+    //         if ($parcelstatus != null) {
+    //             $datavalue[5] = $parcelstatus->title;
+    //         } else {
+    //             $datavalue[5] = '';
+    //         }
+    //         $deliverymanInfo = \App\Deliveryman::find($value->deliverymanId);
+    //         if ($value->deliverymanId) {
+    //             $datavalue[6] = $deliverymanInfo->name;
+    //         } else {
+    //             $datavalue[6] = 'Not Asign';
+    //         }
+    //         $datavalue[7]  = number_format($value->cod, 2);
+    //         $datavalue[8]  = number_format($value->package_value, 2);
+    //         $datavalue[9]  = number_format($value->deliveryCharge, 2);
+    //         $datavalue[10] = number_format($value->codCharge, 2);
+    //         $datavalue[11] = number_format($value->tax, 2);
+    //         $datavalue[12] = number_format($value->insurance, 2);
+    //         $datavalue[13] = number_format($value->cod - ($value->deliveryCharge + $value->codCharge + $value->tax + $value->insurance), 2);
+    //         $datavalue[14] = date('F d, Y', strtotime($value->updated_at)) . '<br>' . date("g:i a", strtotime($value->updated_at));
+    //         if ($value->merchantpayStatus == null) {
+    //             $datavalue[15] = '<button class="btn " style="background-color: #7C7C7C; color:white"> NULL </button>';
+    //         } elseif ($value->merchantpayStatus == 0) {
+    //             $datavalue[15] = '<button class="btn " style="background-color: #28A745; color:white"> Processing</button>';
+    //         } else {
+    //             $datavalue[15] = '<button class="btn " style="background-color: #28A745; color:white"> Paid </button>';
+    //         }
+    //         $datavalue[16] = $value->id;
+    //         $parcelnote    = \App\Parcelnote::where('parcelId', $value->id)->orderBy('id', 'DESC')->first();
+    //         if (! empty($parcelnote)) {
+    //             $datavalue[17] = $parcelnote->note;
+    //         } else {
+    //             $datavalue[17] = '';
+    //         }
+
+    //         array_push($data['data'], $datavalue);
+
+    //     }
+
+    //     return $data;
+    // }
+    // ** remove this after developement of way bill
     public function get_parcel_data(Request $request, $slug)
     {
        
@@ -1120,50 +1523,53 @@ class MerchantController extends Controller
             $parcelstatus    = Parceltype::find($value->status);
             $merchantDetails = $value->getMerchantOrSenderDetails();
 
-            $datavalue[0] = $value->trackingCode;
-            $datavalue[1] = '<ul class="action_buttons cust-action-btn"><li class="m-1"><button class="btn btn-info" href="#" id="merchantParcel" title="View" data-firstname = "' . $merchantDetails->firstName . '" data-order_number = "' . $value->order_number . '" data-lastname = "' . $merchantDetails->lastName . '" data-phonenumber = "' . $merchantDetails->phoneNumber . '" data-emailaddress = "' . $merchantDetails->emailAddress . '" data-companyname = "' . $merchantDetails->companyName . '" data-recipientname = "' . $value->recipientName . '" data-recipientaddress = "' . $value->recipientAddress . '" data-zonename = "' . $value->zonename . '" data-pickup = "' . $value->pickupcity->title . '/' . $value->pickuptown->title . '" data-delivery = "' . $value->deliverycity->title . '/' . $value->deliverytown->title . '" data-title = "' . $value->title . '" data-package_value = "' . number_format($value->package_value, 2) . '" data-cod = "' . number_format($value->cod, 2) . '" data-codcharge = "' . number_format($value->codCharge, 2) . '" data-deliverycharge = "' . number_format($value->deliveryCharge, 2) . '" data-merchantamount = "' . number_format($value->merchantAmount, 2) . '" data-merchantpaid = "' . number_format($value->merchantPaid, 2) . '" data-merchantdue = "' . number_format($value->merchantDue, 2) . '" data-created_at = "' . $value->created_at . '" data-updated_at = "' . $value->updated_at . '" data-tax = "' . number_format($value->tax, 2) . '" data-insurance = "' . number_format($value->insurance, 2) . '"><i class="fa fa-eye"></i></button></li><li class="m-1"><a href="' . url('merchant/parcel/in-details/' . $value->id) . '" class="btn btn-secondary px-3" title="Track"><i class="fa fa-info"></i></a></li>';
+
+
+            $datavalue[0] = '<input type="checkbox" class="selectItemCheckbox" value="' . $value->id . '" data-status="' . $parcelstatus->id . '" data-parcel_status_update_sl="' . $parcelstatus->sl . '" name="parcel_id[]" form="myform"></form>';
+            $datavalue[1] = $value->trackingCode;
+            $datavalue[2] = '<ul class="action_buttons cust-action-btn"><li class="m-1"><button class="btn btn-info" href="#" id="merchantParcel" title="View" data-firstname = "' . $merchantDetails->firstName . '" data-order_number = "' . $value->order_number . '" data-lastname = "' . $merchantDetails->lastName . '" data-phonenumber = "' . $merchantDetails->phoneNumber . '" data-emailaddress = "' . $merchantDetails->emailAddress . '" data-companyname = "' . $merchantDetails->companyName . '" data-recipientname = "' . $value->recipientName . '" data-recipientaddress = "' . $value->recipientAddress . '" data-zonename = "' . $value->zonename . '" data-pickup = "' . $value->pickupcity->title . '/' . $value->pickuptown->title . '" data-delivery = "' . $value->deliverycity->title . '/' . $value->deliverytown->title . '" data-title = "' . $value->title . '" data-package_value = "' . number_format($value->package_value, 2) . '" data-cod = "' . number_format($value->cod, 2) . '" data-codcharge = "' . number_format($value->codCharge, 2) . '" data-deliverycharge = "' . number_format($value->deliveryCharge, 2) . '" data-merchantamount = "' . number_format($value->merchantAmount, 2) . '" data-merchantpaid = "' . number_format($value->merchantPaid, 2) . '" data-merchantdue = "' . number_format($value->merchantDue, 2) . '" data-created_at = "' . $value->created_at . '" data-updated_at = "' . $value->updated_at . '" data-tax = "' . number_format($value->tax, 2) . '" data-insurance = "' . number_format($value->insurance, 2) . '"><i class="fa fa-eye"></i></button></li><li class="m-1"><a href="' . url('merchant/parcel/in-details/' . $value->id) . '" class="btn btn-secondary px-3" title="Track"><i class="fa fa-info"></i></a></li>';
 
             if ($value->status == 1) {
-                $datavalue[1] .= '<li class="m-1"><a href="' . url('merchant/parcel/edit/' . $value->id) . '" class="btn btn-danger" title="Edit"><i class="fa fa-edit"></i></a></li>';
+                $datavalue[2] .= '<li class="m-1"><a href="' . url('merchant/parcel/edit/' . $value->id) . '" class="btn btn-danger" title="Edit"><i class="fa fa-edit"></i></a></li>';
             }
-            $datavalue[1] .= '<li class="m-1"><a class="btn btn-primary" href="' . url('merchant/parcel/invoice/' . $value->id) . '" target="_blank"  title="Invoice"><i class="fas fa-list"></i></a></li></ul>';
-            $datavalue[2] = date('F d, Y', strtotime($value->created_at)) . '<br>' . date("g:i a", strtotime($value->created_at));
-            $datavalue[3] = $value->recipientName;
-            $datavalue[4] = $value->recipientPhone;
+            $datavalue[2] .= '<li class="m-1"><a class="btn btn-primary" href="' . url('merchant/parcel/invoice/' . $value->id) . '" target="_blank"  title="Invoice"><i class="fas fa-list"></i></a></li></ul>';
+            $datavalue[3] = date('F d, Y', strtotime($value->created_at)) . '<br>' . date("g:i a", strtotime($value->created_at));
+            $datavalue[4] = $value->recipientName;
+            $datavalue[5] = $value->recipientPhone;
             $parcelstatus = \App\Parceltype::find($value->status);
 
             if ($parcelstatus != null) {
-                $datavalue[5] = $parcelstatus->title;
+                $datavalue[6] = $parcelstatus->title;
             } else {
-                $datavalue[5] = '';
+                $datavalue[6] = '';
             }
             $deliverymanInfo = \App\Deliveryman::find($value->deliverymanId);
             if ($value->deliverymanId) {
-                $datavalue[6] = $deliverymanInfo->name;
+                $datavalue[7] = $deliverymanInfo->name;
             } else {
-                $datavalue[6] = 'Not Asign';
+                $datavalue[7] = 'Not Asign';
             }
-            $datavalue[7]  = number_format($value->cod, 2);
-            $datavalue[8]  = number_format($value->package_value, 2);
-            $datavalue[9]  = number_format($value->deliveryCharge, 2);
-            $datavalue[10] = number_format($value->codCharge, 2);
-            $datavalue[11] = number_format($value->tax, 2);
-            $datavalue[12] = number_format($value->insurance, 2);
-            $datavalue[13] = number_format($value->cod - ($value->deliveryCharge + $value->codCharge + $value->tax + $value->insurance), 2);
-            $datavalue[14] = date('F d, Y', strtotime($value->updated_at)) . '<br>' . date("g:i a", strtotime($value->updated_at));
+            $datavalue[8]  = number_format($value->cod, 2);
+            $datavalue[9]  = number_format($value->package_value, 2);
+            $datavalue[10]  = number_format($value->deliveryCharge, 2);
+            $datavalue[11] = number_format($value->codCharge, 2);
+            $datavalue[12] = number_format($value->tax, 2);
+            $datavalue[13] = number_format($value->insurance, 2);
+            $datavalue[14] = number_format($value->cod - ($value->deliveryCharge + $value->codCharge + $value->tax + $value->insurance), 2);
+            $datavalue[15] = date('F d, Y', strtotime($value->updated_at)) . '<br>' . date("g:i a", strtotime($value->updated_at));
             if ($value->merchantpayStatus == null) {
-                $datavalue[15] = '<button class="btn " style="background-color: #7C7C7C; color:white"> NULL </button>';
+                $datavalue[16] = '<button class="btn " style="background-color: #7C7C7C; color:white"> NULL </button>';
             } elseif ($value->merchantpayStatus == 0) {
-                $datavalue[15] = '<button class="btn " style="background-color: #28A745; color:white"> Processing</button>';
+                $datavalue[16] = '<button class="btn " style="background-color: #28A745; color:white"> Processing</button>';
             } else {
-                $datavalue[15] = '<button class="btn " style="background-color: #28A745; color:white"> Paid </button>';
+                $datavalue[16] = '<button class="btn " style="background-color: #28A745; color:white"> Paid </button>';
             }
-            $datavalue[16] = $value->id;
+            $datavalue[17] = $value->id;
             $parcelnote    = \App\Parcelnote::where('parcelId', $value->id)->orderBy('id', 'DESC')->first();
             if (! empty($parcelnote)) {
-                $datavalue[17] = $parcelnote->note;
+                $datavalue[18] = $parcelnote->note;
             } else {
-                $datavalue[17] = '';
+                $datavalue[18] = '';
             }
 
             array_push($data['data'], $datavalue);
@@ -1172,10 +1578,11 @@ class MerchantController extends Controller
 
         return $data;
     }
-
     public function parcelstatus($slug)
     {
         $parceltype = Parceltype::where('slug', $slug)->first();
+        // var_dump($parceltype->id);
+        // exit();
         $slug       = $slug;
         if (request()->month) {
             $allparcel = DB::table('parcels')
@@ -1228,6 +1635,37 @@ class MerchantController extends Controller
         // return view('frontEnd.layouts.pages.merchant.month_parcels', compact('allparcel', 'slug', 'parceltype'));
         return view('frontEnd.layouts.pages.merchant.parcels', compact('allparcel', 'slug', 'parceltype'));
     }
+    // Remove this after way bill development
+    public function parcelstatus_monthTest($slug)
+    {
+        $parceltype = Parceltype::where('slug', $slug)->first();
+        $slug       = $slug;
+        if (request()->month) {
+            $allparcel = DB::table('parcels')
+                ->join('merchants', 'merchants.id', '=', 'parcels.merchantId')
+                ->where('parcels.merchantId', Session::get('merchantId'))
+                ->where('parcels.status', $parceltype->id)
+                ->whereMonth('parcels.updated_at', now())
+                ->whereYear('parcels.updated_at', now())
+                ->select('parcels.*', 'merchants.firstName', 'merchants.lastName', 'merchants.phoneNumber', 'merchants.emailAddress', 'merchants.companyName', 'merchants.status as mstatus', 'merchants.id as mid')
+                ->orderBy('updated_at', 'DESC')
+                ->get();
+
+        } else {
+            $allparcel = DB::table('parcels')
+                ->join('merchants', 'merchants.id', '=', 'parcels.merchantId')
+                ->where('parcels.merchantId', Session::get('merchantId'))
+                ->where('parcels.status', $parceltype->id)
+                ->whereMonth('parcels.updated_at', now())
+                ->whereYear('parcels.updated_at', now())
+                ->select('parcels.*', 'merchants.firstName', 'merchants.lastName', 'merchants.phoneNumber', 'merchants.emailAddress', 'merchants.companyName', 'merchants.status as mstatus', 'merchants.id as mid')
+                ->orderBy('updated_at', 'DESC')
+                ->get();
+        }
+
+        // return view('frontEnd.layouts.pages.merchant.month_parcels', compact('allparcel', 'slug', 'parceltype'));
+        return view('frontEnd.layouts.pages.merchant.parcelsTest', compact('allparcel', 'slug', 'parceltype'));
+    }
 
     // public function parcelstatus_month($slug)
     // {
@@ -1267,7 +1705,160 @@ class MerchantController extends Controller
     //     return view('frontEnd.layouts.pages.merchant.month_parcels', compact('allparcel', 'slug', 'parceltype'));
     // }
 
-    public function get_parcel_data_month($slug, Request $request)
+    // public function get_parcel_data_monthOld($slug, Request $request)
+    // {
+    //     $parceltype = Parceltype::where('slug', $slug)->first();
+    //     // Datatable
+    //     $start = 0;
+    //     if (isset($request->start)) {
+    //         $start = $request->start;
+    //     }
+    //     $draw = 1;
+    //     if (isset($request->draw)) {
+    //         $draw = $request->draw;
+    //     }
+    //     $length = 10;
+    //     if (isset($request->length)) {
+    //         $length = $request->length;
+    //     }
+
+    //     $filter = $request->filter_id;
+
+    //     if ($slug == 'all') {
+    //         $query = \App\Parcel::select('*')
+    //             ->with(['pickupcity', 'deliverycity', 'pickuptown', 'deliverytown', 'merchant', 'deliverymen', 'agent', 'parceltype'])
+    //             ->where('merchantId', Session::get('merchantId'))
+    //             ->whereMonth('parcels.updated_at', now())
+    //             ->orderBy('updated_at', 'DESC');
+
+    //         if ($request->trackId) {
+    //             $query->where('trackingCode', $request->trackId);
+    //         } elseif ($request->phoneNumber) {
+    //             $query->where('recipientPhone', $request->phoneNumber);
+    //         } elseif ($request->cname) {
+    //             $query->where('recipientName', 'like', '%' . $request->cname . '%');
+    //         } elseif ($request->address) {
+    //             $query->where('recipientAddress', $request->address);
+    //         } elseif ($request->startDate && $request->endDate) {
+    //             $startDate = Carbon::parse($request->startDate)->startOfDay();
+    //             $endDate   = Carbon::parse($request->endDate)->endOfDay();
+    //             $query->whereBetween('created_at', [$startDate, $endDate]);
+    //         } elseif ($request->upstartDate && $request->upendDate) {
+    //             $startDate = Carbon::parse($request->upstartDate)->startOfDay();
+    //             $endDate   = Carbon::parse($request->upendDate)->endOfDay();
+    //             $query->whereBetween('updated_at', [$startDate, $endDate]);
+    //         } elseif ($request->UpStatusArray != null) {
+    //             $query->whereIn('status', $request->UpStatusArray);
+    //         }
+
+    //     } else {
+
+    //         $slug       = $slug;
+    //         $parceltype = Parceltype::where('slug', $slug)->first();
+    //         $query      = \App\Parcel::select('*')
+    //             ->with(['pickupcity', 'deliverycity', 'pickuptown', 'deliverytown', 'merchant', 'deliverymen', 'agent', 'parceltype'])
+    //             ->where('merchantId', Session::get('merchantId'))
+    //             ->where('status', $parceltype->id)
+    //             ->whereMonth('parcels.updated_at', now()->month)
+    //             ->whereYear('parcels.updated_at', now()->year)
+    //             ->orderBy('updated_at', 'DESC');
+    //         if ($request->trackId) {
+    //             $query->where('trackingCode', $request->trackId);
+    //         } elseif ($request->phoneNumber) {
+    //             $query->where('recipientPhone', $request->phoneNumber);
+    //         } elseif ($request->cname) {
+    //             $query->where('recipientName', 'like', '%' . $request->cname . '%');
+    //         } elseif ($request->address) {
+    //             $query->where('recipientAddress', $request->address);
+    //         } elseif ($request->startDate && $request->endDate) {
+    //             $startDate = Carbon::parse($request->startDate)->startOfDay();
+    //             $endDate   = Carbon::parse($request->endDate)->endOfDay();
+    //             $query->whereBetween('created_at', [$startDate, $endDate]);
+    //         } elseif ($request->upstartDate && $request->upendDate) {
+    //             $startDate = Carbon::parse($request->upstartDate)->startOfDay();
+    //             $endDate   = Carbon::parse($request->upendDate)->endOfDay();
+    //             $query->whereBetween('updated_at', [$startDate, $endDate]);
+    //         } elseif ($request->UpStatusArray != null) {
+    //             $query->whereIn('status', $request->UpStatusArray);
+    //         }
+
+    //     }
+    //     $count     = $query->count();
+    //     $allparcel = $query->offset($start)->limit($length)->get();
+
+    //     $aparceltypes = Parceltype::limit(3)->get();
+    //     //   return $allparcel;
+    //     // Data table
+    //     $data = [
+    //         'draw'            => $draw,
+    //         'recordsTotal'    => $count,
+    //         'recordsFiltered' => $count,
+    //         'data'            => [],
+    //     ];
+
+    //     foreach ($allparcel as $key => $value) {
+    //         $deliverymanInfo = Deliveryman::find($value->deliverymanId);
+    //         $merchantInfo    = Merchant::find($value->merchantId);
+    //         $parcelstatus    = Parceltype::find($value->status);
+    //         $merchantDetails = $value->getMerchantOrSenderDetails();
+
+    //         $datavalue[0] = $value->trackingCode;
+    //         $datavalue[1] = '<ul class="action_buttons cust-action-btn"><li class="m-1"><button class="btn btn-info" href="#" id="merchantParcel" title="View" data-firstname = "' . $merchantDetails->firstName . '" data-order_number = "' . $value->order_number . '" data-lastname = "' . $merchantDetails->lastName . '" data-phonenumber = "' . $merchantDetails->phoneNumber . '" data-emailaddress = "' . $merchantDetails->emailAddress . '" data-companyname = "' . $merchantDetails->companyName . '" data-recipientname = "' . $value->recipientName . '" data-recipientaddress = "' . $value->recipientAddress . '" data-zonename = "' . $value->zonename . '" data-pickup = "' . $value->pickupcity->title . '/' . $value->pickuptown->title . '" data-delivery = "' . $value->deliverycity->title . '/' . $value->deliverytown->title . '" data-title = "' . $value->title . '" data-package_value = "' . number_format($value->package_value, 2) . '" data-cod = "' . number_format($value->cod, 2) . '" data-codcharge = "' . number_format($value->codCharge, 2) . '" data-deliverycharge = "' . number_format($value->deliveryCharge, 2) . '" data-merchantamount = "' . number_format($value->merchantAmount, 2) . '" data-merchantpaid = "' . number_format($value->merchantPaid, 2) . '" data-merchantdue = "' . number_format($value->merchantDue, 2) . '" data-created_at = "' . $value->created_at . '" data-updated_at = "' . $value->updated_at . '" data-tax = "' . number_format($value->tax, 2) . '" data-insurance = "' . number_format($value->insurance, 2) . '"><i class="fa fa-eye"></i></button></li><li class="m-1"><a href="' . url('merchant/parcel/in-details/' . $value->id) . '" class="btn btn-secondary px-3" title="Track"><i class="fa fa-info"></i></a></li>';
+    //         if ($value->status == 1) {
+    //             $datavalue[1] .= '<li class="m-1"><a href="' . url('merchant/parcel/edit/' . $value->id) . '" class="btn btn-danger"><i class="fa fa-edit"></i></a></li>';
+    //         }
+    //         $datavalue[1] .= '<li class="m-1"><a class="btn btn-primary" href="' . url('merchant/parcel/invoice/' . $value->id) . '"  target="_blank" title="Invoice"><i class="fas fa-list"></i></a></li>';
+    //         $datavalue[2] = date('F d, Y', strtotime($value->created_at)) . '<br>' . date("g:i a", strtotime($value->created_at));
+    //         $datavalue[3] = $value->recipientName;
+    //         $datavalue[4] = $value->recipientPhone;
+    //         $parcelstatus = \App\Parceltype::find($value->status);
+
+    //         if ($parcelstatus != null) {
+    //             $datavalue[5] = $parcelstatus->title;
+    //         } else {
+    //             $datavalue[5] = '';
+    //         }
+    //         $deliverymanInfo = \App\Deliveryman::find($value->deliverymanId);
+    //         if ($value->deliverymanId) {
+    //             $datavalue[6] = $deliverymanInfo->name;
+    //         } else {
+    //             $datavalue[6] = 'Not Asign';
+    //         }
+    //         $datavalue[7]  = number_format($value->cod, 2);
+    //         $datavalue[8]  = number_format($value->package_value, 2);
+    //         $datavalue[9]  = number_format($value->deliveryCharge, 2);
+    //         $datavalue[10] = number_format($value->codCharge, 2);
+
+    //         $datavalue[11] = number_format($value->tax, 2);
+    //         $datavalue[12] = number_format($value->insurance, 2);
+    //         $datavalue[13] = number_format(
+    //             ($value->cod ?? 0) - (($value->deliveryCharge ?? 0) + ($value->codCharge ?? 0) + ($value->tax ?? 0) + ($value->insurance ?? 0)),
+    //             2
+    //         );
+
+    //         $datavalue[14] = date('F d, Y', strtotime($value->updated_at)) . '<br>' . date("g:i a", strtotime($value->updated_at));
+    //         if ($value->merchantpayStatus == null) {
+    //             $datavalue[15] = '<button class="btn " style="background-color: #7C7C7C; color:white"> NULL </button>';
+    //         } elseif ($value->merchantpayStatus == 0) {
+    //             $datavalue[15] = '<button class="btn " style="background-color: #28A745; color:white"> Processing</button>';
+    //         } else {
+    //             $datavalue[15] = '<button class="btn " style="background-color: #28A745; color:white"> Paid </button>';
+    //         }
+    //         $datavalue[16] = $value->id;
+    //         $parcelnote    = \App\Parcelnote::where('parcelId', $value->id)->orderBy('id', 'DESC')->first();
+    //         if (! empty($parcelnote)) {
+    //             $datavalue[17] = $parcelnote->note;
+    //         } else {
+    //             $datavalue[17] = '';
+    //         }
+
+    //         array_push($data['data'], $datavalue);
+
+    //     }
+    //     return $data;
+    // }
+    // ** remove this after developement of way bill
+     public function get_parcel_data_month($slug, Request $request)
     {
         $parceltype = Parceltype::where('slug', $slug)->first();
         // Datatable
@@ -1364,54 +1955,57 @@ class MerchantController extends Controller
             $parcelstatus    = Parceltype::find($value->status);
             $merchantDetails = $value->getMerchantOrSenderDetails();
 
-            $datavalue[0] = $value->trackingCode;
-            $datavalue[1] = '<ul class="action_buttons cust-action-btn"><li class="m-1"><button class="btn btn-info" href="#" id="merchantParcel" title="View" data-firstname = "' . $merchantDetails->firstName . '" data-order_number = "' . $value->order_number . '" data-lastname = "' . $merchantDetails->lastName . '" data-phonenumber = "' . $merchantDetails->phoneNumber . '" data-emailaddress = "' . $merchantDetails->emailAddress . '" data-companyname = "' . $merchantDetails->companyName . '" data-recipientname = "' . $value->recipientName . '" data-recipientaddress = "' . $value->recipientAddress . '" data-zonename = "' . $value->zonename . '" data-pickup = "' . $value->pickupcity->title . '/' . $value->pickuptown->title . '" data-delivery = "' . $value->deliverycity->title . '/' . $value->deliverytown->title . '" data-title = "' . $value->title . '" data-package_value = "' . number_format($value->package_value, 2) . '" data-cod = "' . number_format($value->cod, 2) . '" data-codcharge = "' . number_format($value->codCharge, 2) . '" data-deliverycharge = "' . number_format($value->deliveryCharge, 2) . '" data-merchantamount = "' . number_format($value->merchantAmount, 2) . '" data-merchantpaid = "' . number_format($value->merchantPaid, 2) . '" data-merchantdue = "' . number_format($value->merchantDue, 2) . '" data-created_at = "' . $value->created_at . '" data-updated_at = "' . $value->updated_at . '" data-tax = "' . number_format($value->tax, 2) . '" data-insurance = "' . number_format($value->insurance, 2) . '"><i class="fa fa-eye"></i></button></li><li class="m-1"><a href="' . url('merchant/parcel/in-details/' . $value->id) . '" class="btn btn-secondary px-3" title="Track"><i class="fa fa-info"></i></a></li>';
+
+            
+            $datavalue[0] = '<input type="checkbox" class="selectItemCheckbox" value="' . $value->id . '" data-status="' . $parcelstatus->id . '" data-parcel_status_update_sl="' . $parcelstatus->sl . '" name="parcel_id[]" form="myform"></form>';
+            $datavalue[1] = $value->trackingCode;
+            $datavalue[2] = '<ul class="action_buttons cust-action-btn"><li class="m-1"><button class="btn btn-info" href="#" id="merchantParcel" title="View" data-firstname = "' . $merchantDetails->firstName . '" data-order_number = "' . $value->order_number . '" data-lastname = "' . $merchantDetails->lastName . '" data-phonenumber = "' . $merchantDetails->phoneNumber . '" data-emailaddress = "' . $merchantDetails->emailAddress . '" data-companyname = "' . $merchantDetails->companyName . '" data-recipientname = "' . $value->recipientName . '" data-recipientaddress = "' . $value->recipientAddress . '" data-zonename = "' . $value->zonename . '" data-pickup = "' . $value->pickupcity->title . '/' . $value->pickuptown->title . '" data-delivery = "' . $value->deliverycity->title . '/' . $value->deliverytown->title . '" data-title = "' . $value->title . '" data-package_value = "' . number_format($value->package_value, 2) . '" data-cod = "' . number_format($value->cod, 2) . '" data-codcharge = "' . number_format($value->codCharge, 2) . '" data-deliverycharge = "' . number_format($value->deliveryCharge, 2) . '" data-merchantamount = "' . number_format($value->merchantAmount, 2) . '" data-merchantpaid = "' . number_format($value->merchantPaid, 2) . '" data-merchantdue = "' . number_format($value->merchantDue, 2) . '" data-created_at = "' . $value->created_at . '" data-updated_at = "' . $value->updated_at . '" data-tax = "' . number_format($value->tax, 2) . '" data-insurance = "' . number_format($value->insurance, 2) . '"><i class="fa fa-eye"></i></button></li><li class="m-1"><a href="' . url('merchant/parcel/in-details/' . $value->id) . '" class="btn btn-secondary px-3" title="Track"><i class="fa fa-info"></i></a></li>';
             if ($value->status == 1) {
-                $datavalue[1] .= '<li class="m-1"><a href="' . url('merchant/parcel/edit/' . $value->id) . '" class="btn btn-danger"><i class="fa fa-edit"></i></a></li>';
+                $datavalue[2] .= '<li class="m-1"><a href="' . url('merchant/parcel/edit/' . $value->id) . '" class="btn btn-danger"><i class="fa fa-edit"></i></a></li>';
             }
-            $datavalue[1] .= '<li class="m-1"><a class="btn btn-primary" href="' . url('merchant/parcel/invoice/' . $value->id) . '"  target="_blank" title="Invoice"><i class="fas fa-list"></i></a></li>';
-            $datavalue[2] = date('F d, Y', strtotime($value->created_at)) . '<br>' . date("g:i a", strtotime($value->created_at));
-            $datavalue[3] = $value->recipientName;
-            $datavalue[4] = $value->recipientPhone;
+            $datavalue[2] .= '<li class="m-1"><a class="btn btn-primary" href="' . url('merchant/parcel/invoice/' . $value->id) . '"  target="_blank" title="Invoice"><i class="fas fa-list"></i></a></li>';
+            $datavalue[3] = date('F d, Y', strtotime($value->created_at)) . '<br>' . date("g:i a", strtotime($value->created_at));
+            $datavalue[4] = $value->recipientName;
+            $datavalue[5] = $value->recipientPhone;
             $parcelstatus = \App\Parceltype::find($value->status);
 
             if ($parcelstatus != null) {
-                $datavalue[5] = $parcelstatus->title;
+                $datavalue[6] = $parcelstatus->title;
             } else {
-                $datavalue[5] = '';
+                $datavalue[6] = '';
             }
             $deliverymanInfo = \App\Deliveryman::find($value->deliverymanId);
             if ($value->deliverymanId) {
-                $datavalue[6] = $deliverymanInfo->name;
+                $datavalue[7] = $deliverymanInfo->name;
             } else {
-                $datavalue[6] = 'Not Asign';
+                $datavalue[7] = 'Not Asign';
             }
-            $datavalue[7]  = number_format($value->cod, 2);
-            $datavalue[8]  = number_format($value->package_value, 2);
-            $datavalue[9]  = number_format($value->deliveryCharge, 2);
-            $datavalue[10] = number_format($value->codCharge, 2);
+            $datavalue[8]  = number_format($value->cod, 2);
+            $datavalue[9]  = number_format($value->package_value, 2);
+            $datavalue[10]  = number_format($value->deliveryCharge, 2);
+            $datavalue[11] = number_format($value->codCharge, 2);
 
-            $datavalue[11] = number_format($value->tax, 2);
-            $datavalue[12] = number_format($value->insurance, 2);
-            $datavalue[13] = number_format(
+            $datavalue[12] = number_format($value->tax, 2);
+            $datavalue[13] = number_format($value->insurance, 2);
+            $datavalue[14] = number_format(
                 ($value->cod ?? 0) - (($value->deliveryCharge ?? 0) + ($value->codCharge ?? 0) + ($value->tax ?? 0) + ($value->insurance ?? 0)),
                 2
             );
 
-            $datavalue[14] = date('F d, Y', strtotime($value->updated_at)) . '<br>' . date("g:i a", strtotime($value->updated_at));
+            $datavalue[15] = date('F d, Y', strtotime($value->updated_at)) . '<br>' . date("g:i a", strtotime($value->updated_at));
             if ($value->merchantpayStatus == null) {
-                $datavalue[15] = '<button class="btn " style="background-color: #7C7C7C; color:white"> NULL </button>';
+                $datavalue[16] = '<button class="btn " style="background-color: #7C7C7C; color:white"> NULL </button>';
             } elseif ($value->merchantpayStatus == 0) {
-                $datavalue[15] = '<button class="btn " style="background-color: #28A745; color:white"> Processing</button>';
+                $datavalue[16] = '<button class="btn " style="background-color: #28A745; color:white"> Processing</button>';
             } else {
-                $datavalue[15] = '<button class="btn " style="background-color: #28A745; color:white"> Paid </button>';
+                $datavalue[16] = '<button class="btn " style="background-color: #28A745; color:white"> Paid </button>';
             }
-            $datavalue[16] = $value->id;
+            $datavalue[17] = $value->id;
             $parcelnote    = \App\Parcelnote::where('parcelId', $value->id)->orderBy('id', 'DESC')->first();
             if (! empty($parcelnote)) {
-                $datavalue[17] = $parcelnote->note;
+                $datavalue[18] = $parcelnote->note;
             } else {
-                $datavalue[17] = '';
+                $datavalue[18] = '';
             }
 
             array_push($data['data'], $datavalue);
@@ -1743,6 +2337,7 @@ class MerchantController extends Controller
         return redirect()->back();
     }
 
+
     public function export(Request $request)
     {
         return Excel::download(new ParcelExport(), 'parcel.xlsx');
@@ -1780,6 +2375,43 @@ class MerchantController extends Controller
             return back();
         }
 
+    }
+     public function PrintSelectedItems(Request $request)
+    {
+        $parcels = \App\Parcel::whereIn('id', explode(',', $request->query('parcels'))) // Accept comma-separated values
+            ->with(['pickupcity', 'deliverycity', 'pickuptown', 'deliverytown', 'merchant', 'deliverymen', 'agent', 'parceltype', 'p2pParcel'])
+            ->get();
+
+        $pdf = new \Mpdf\Mpdf([
+            'mode'              => 'utf-8',
+                                         // 'format' => [210.0, 148.5], // Use 148.5 for exact half of A4 height
+            'format'            => 'A4', // Use 148.5 for exact half of A4 height
+            'orientation'       => 'P',
+            'margin_top'        => 5,
+            'margin_bottom'     => 5,
+            'margin_left'       => 5,
+            'margin_right'      => 5,
+            'default_font_size' => 10,
+            'default_font'      => 'dejavusans',
+            'autoScriptToLang'  => true,
+            'autoLangToFont'    => true,
+            'margin_footer'     => 0,
+            'shrink_tables'     => 1,
+        ]);
+
+        $view = 'pdf.pdf';
+        $html = trim(view($view, ['parcels' => $parcels])->render());
+        $pdf->WriteHTML($html);
+
+        $timestamp = Carbon::now()->format('j-M-Y g:i A'); // 12-hour format with AM/PM
+        $filename  = "ZiDrop_Waybill_{$timestamp}.pdf";
+
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->Output('', 'S');
+        }, $filename, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'attachment',
+        ]);
     }
 
 }

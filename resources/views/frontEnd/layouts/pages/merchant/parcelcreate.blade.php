@@ -62,12 +62,18 @@
     vertical-align: middle;
     position: relative;
     top: -2px; /* manually nudge it up */
-    }
-
-    .subscription-badge.active {
+    }        .subscription-badge.active {
         background-color: #e6f4ea; /* Light green background */
         color: #237a3b; /* Darker green text */
         border-color: #a8d5b1; /* Light green border */
+    }
+
+    .walletbalance{
+        background-color: #A53D3D;
+        padding: 10px 20px;
+        border-radius: 5px;
+        color: #ffffff;
+        display: none;
     }
     </style>
     <section class="section-padding">
@@ -152,6 +158,8 @@
                                         value="{{ $merchantDetails->ins_cal_permission }}">
                                     <input type="hidden" id="cod_cal_permission" name="cod_cal_permission"
                                         value="{{ $merchantDetails->cod_cal_permission }}">
+                                    <input type="hidden" id="merchant_balance" name="merchant_balance"
+                                        value="{{ $merchantDetails->balance ?? 0 }}">
                                     <div class="row">
                                         <div class="col-sm-6">
                                             <div class="form-group">
@@ -417,6 +425,10 @@
                         </div>
                         <!-- col end -->
                         <div class="col-lg-5 col-md-5 col-sm-12">
+                            <div class="prcTag_section">
+                                <h5 class="walletbalance"><strong>Merchant Wallet Balance: N<span class="walletbalanceAMnt"></span></strong> </h5>
+                            </div>
+                            <br>
                             <div class="parcel-details-instance">
                                 <h2>Delivery Charge Details</h2>
                                 <div class="content calculate_result">
@@ -477,8 +489,9 @@
                                     <!-- row end -->
                                     <div class="row">
                                         <div class="col-sm-12">
-                                            <p class="text-center unbold">Note : <span class="">If you request for
-                                                    pick up after 5pm, it will be collected on the next day</span></p>
+                                            <p class="bg-light text-gray text-end p-3 rounded">
+                                              <strong>Note:</strong> <span>Pickup requests made after <strong>9:00 AM</strong> will be scheduled for collection the next day.</span>
+                                            </p>
                                         </div>
                                     </div>
                                     <!-- row end -->
@@ -718,6 +731,8 @@
             @endif
             $('select[name="payment_option"]').on('change', function() {
                 var payment_option = $("#payment_option").val();
+                var walletbalance = $("#merchant_balance").val() || 0;
+                
                 if (payment_option == 1) {
                     // 1 for prepaid
                     $(".cod").val(0);
@@ -733,6 +748,10 @@
                     $("#productQty").removeClass('col-sm-6');
                     $("#productQty").addClass('col-sm-4');
                     $(".codCharge").text(CurrencyFormatted(0));
+                    
+                    // Show wallet balance for prepaid
+                    $(".walletbalanceAMnt").text(CurrencyFormatted(walletbalance));
+                    $(".walletbalance").show();
                 } else {
                     $(".cod").val('');
                     $("input[name='package_value']").val('');
@@ -747,6 +766,9 @@
                     $("#weight").addClass('col-sm-6');
                     $("#productQty").removeClass('col-sm-4');
                     $("#productQty").addClass('col-sm-6');
+                    
+                    // Hide wallet balance for COD
+                    $(".walletbalance").hide();
                 }
                 codUpdate();
                 devlieryCharge();

@@ -239,7 +239,8 @@
                                                                 <div
                                                                     style="color:#555555;font-family:'Oswald','Lucida Sans Unicode','Lucida Grande',sans-serif;font-size:26px;line-height:120%;text-align:left;mso-line-height-alt:31.2px;">
                                                                     <p style="margin: 0; word-break: break-word;">
-                                                                        <strong>Hi {{ $title }},</strong></p>
+                                                                        <strong>Hi {{ $title }},</strong>
+                                                                    </p>
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -277,23 +278,43 @@
                                                                 style="padding-bottom:10px;padding-left:40px;padding-right:10px;padding-top:10px;">
                                                                 <div
                                                                     style="color:#555555;font-family:'Oswald','Lucida Sans Unicode','Lucida Grande',sans-serif;font-size:19px;line-height:120%;text-align:left;mso-line-height-alt:22.8px;">
-                                                                    <p style="margin: 0;">Your Subscription Plan (<strong>{{ $plan->name }}</strong> ) has been Activated:
+                                                                    <p style="margin: 0;">Your Subscription Plan
+                                                                        (<strong>{{ $plan->name }}</strong> ) has been
+                                                                        Activated:
                                                                     </p>
                                                                     <p style="margin: 0;"> </p>
                                                                     <p style="margin: 0;"><strong>Payment Status:
                                                                         </strong>Paid</p>
                                                                     <p style="margin: 0;"> </p>
-                                                                    <p style="margin: 0;"><strong>Duration:</strong>
-                                                                        {{ $plan->duration }} Days
-                                                                    </p>
+                                                                    @if ($MerchantSubscriptions->assign_by == 'admin')
+                                                                        <p style="margin: 0;">
+                                                                            <strong>Duration:</strong>
+                                                                            Lifetime
+                                                                        </p>
+                                                                    @else
+                                                                        <p style="margin: 0;">
+                                                                            <strong>Duration:</strong>
+                                                                            {{ $plan->duration }} Days
+                                                                        </p>
+                                                                    @endif
                                                                     <p style="margin: 0;"> </p>
                                                                     <p style="margin: 0;"><strong>Value:</strong>
                                                                         ₦{{ number_format($plan->price, 2) }}
                                                                     </p>
                                                                     <p style="margin: 0;"> </p>
-                                                                    <p style="margin: 0;"><strong>Expired In:</strong>
-                                                                        {{ $MerchantSubscriptions->expired_time->format('Y-m-d')}}
-                                                                    </p>
+                                                                    @if ($MerchantSubscriptions->assign_by == 'admin')
+                                                                        <p style="margin: 0;"><strong>Expired
+                                                                                In:</strong>
+                                                                            Lifetime
+                                                                        </p>
+                                                                    @else
+                                                                        <p style="margin: 0;"><strong>Expired
+                                                                                In:</strong>
+                                                                            {{ \Carbon\Carbon::parse($MerchantSubscriptions->expired_time)->format('d M Y') }}
+                                                                        </p>
+                                                                    @endif
+
+
 
                                                                     <p style="margin: 0;"> </p>
                                                                     <p style="margin: 0;"> </p>
@@ -420,7 +441,8 @@
                                                                     style="color:#FFFFFF;font-family:'Oswald','Lucida Sans Unicode','Lucida Grande',sans-serif;font-size:20px;line-height:120%;text-align:left;mso-line-height-alt:24px;">
                                                                     <p style="margin: 0; word-break: break-word;">
                                                                         <span><strong>Need help? No
-                                                                                problem.</strong></span></p>
+                                                                                problem.</strong></span>
+                                                                    </p>
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -520,7 +542,8 @@
                                                                 <div
                                                                     style="color:#3C82A0;font-family:'Catamaran', 'Lucida Sans Unicode', 'Lucida Grande', sans-serif;font-size:14px;line-height:120%;text-align:center;mso-line-height-alt:16.8px;">
                                                                     <p style="margin: 0; word-break: break-word;">
-                                                                        <strong>ZiDrop Express Services</strong></p>
+                                                                        <strong>ZiDrop Express Services</strong>
+                                                                    </p>
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -538,7 +561,8 @@
                                                                         Destiny Homes Estate, Lekki-Epe Expressway,
                                                                         Abijo, Lagos</p>
                                                                     <p style="margin: 0; word-break: break-word;">
-                                                                        <span>e-tailing@zidrop.com</span></p>
+                                                                        <span>e-tailing@zidrop.com</span>
+                                                                    </p>
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -574,7 +598,8 @@
                                                                 <div
                                                                     style="color:#555555;font-family:'Catamaran', 'Lucida Sans Unicode', 'Lucida Grande', sans-serif;font-size:12px;line-height:120%;text-align:center;mso-line-height-alt:14.399999999999999px;">
                                                                     <p style="margin: 0; word-break: break-word;">
-                                                                        ZiDrop Express Alliance Limited &#169; All rights
+                                                                        ZiDrop Express Alliance Limited &#169; All
+                                                                        rights
                                                                         reserved</p>
                                                                     <p style="margin: 0; word-break: break-word;"></p>
                                                                 </div>
@@ -625,7 +650,8 @@
                                                                                     height="32"
                                                                                     src="https://zidrop.com/email/images/Logo-For-Zidrop-Logistics.png"
                                                                                     style="display: block; height: auto; margin: 0 auto; border: 0;"
-                                                                                    width="99" /></a></td>
+                                                                                    width="99" /></a>
+                                                                        </td>
                                                                     </tr>
                                                                 </table>
                                                             </td>

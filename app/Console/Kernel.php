@@ -12,10 +12,9 @@ class Kernel extends ConsoleKernel
      *
      * @var array
      */
-    protected $commands = [
-        //
+   protected $commands = [
+    \App\Console\Commands\DisableExpiredSubscriptions::class,
     ];
-
     /**
      * Define the application's command schedule.
      *
@@ -27,7 +26,7 @@ class Kernel extends ConsoleKernel
         // $schedule->command('inspire')
         //          ->hourly();
         
-        $schedule->command('subscriptions:disable-expired')->hourly();
+   $schedule->command('subscriptions:disable-expired')->everyMinute();
 
     }
 

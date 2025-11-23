@@ -447,6 +447,7 @@
                             <!-- <a href="{{ url('tracking') }}"> Tracking</a> -->
 
                             <a href="{{ url('gallery') }}">Gallery</a>
+                            <a href="{{ url('privacy-policy') }}">Privacy Policy</a>
 
                         </div>
                     </div>

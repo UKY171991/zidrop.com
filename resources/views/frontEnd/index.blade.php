@@ -256,8 +256,9 @@
                                     class="ft-funfact-inner-icon d-flex align-items-center justify-content-center position-relative">
                                     <img class="flaticon-delivery-truck"
                                         src="{{ asset('/frontEnd/img/fast-delivery.png') }}" alt="">
-                                </div>                                <div class="ft-funfact-inner-text headline pera-content">
-                                    <h3><span class="counter">{{ $webStatisticsDetails->total_delivery ?? 0 }}</span>M+</h3>
+                                </div>
+                                <div class="ft-funfact-inner-text headline pera-content">
+                                    <h3><span class="counter">{{ $webStatisticsDetails->total_delivery }}</span>M+</h3>
                                     <p>Completed Deliveries</p>
                                 </div>
                             </div>
@@ -269,8 +270,9 @@
                                     <i class=""></i>
                                     <img class="flaticon-community" src="{{ asset('/frontEnd/img/social-justice.png') }}"
                                         alt="">
-                                </div>                                <div class="ft-funfact-inner-text headline pera-content">
-                                    <h3><span class="counter">{{ $webStatisticsDetails->total_customers ?? 0 }}</span>M+</h3>
+                                </div>
+                                <div class="ft-funfact-inner-text headline pera-content">
+                                    <h3><span class="counter">{{ $webStatisticsDetails->total_customers }}</span>M+</h3>
                                     <p>Customers Served</p>
                                 </div>
                             </div>
@@ -281,8 +283,9 @@
                                     class="ft-funfact-inner-icon d-flex align-items-center justify-content-center position-relative">
                                     <img class="flaticon-compliance" src="{{ asset('/frontEnd/img/compliance.png') }}"
                                         alt="">
-                                </div>                                <div class="ft-funfact-inner-text headline pera-content">
-                                    <h3><span class="counter">{{ $webStatisticsDetails->total_years ?? 0 }}</span>+</h3>
+                                </div>
+                                <div class="ft-funfact-inner-text headline pera-content">
+                                    <h3><span class="counter">{{ $webStatisticsDetails->total_years }}</span>+</h3>
                                     <p>Years Experience</p>
                                 </div>
                             </div>
@@ -293,8 +296,9 @@
                                     class="ft-funfact-inner-icon d-flex align-items-center justify-content-center position-relative">
                                     <img class="flaticon-face-detection"
                                         src="{{ asset('/frontEnd/img/face-detection.png') }}" alt="">
-                                </div>                                <div class="ft-funfact-inner-text headline pera-content">
-                                    <h3><span class="counter">{{ $webStatisticsDetails->total_member ?? 0 }}</span>K+</h3>
+                                </div>
+                                <div class="ft-funfact-inner-text headline pera-content">
+                                    <h3><span class="counter">{{ $webStatisticsDetails->total_member }}</span>K+</h3>
                                     <p>Team Members</p>
                                 </div>
                             </div>

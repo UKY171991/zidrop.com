@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\MerchantParcelController;
 use App\Http\Controllers\Api\MerchantWalletController;
 use App\Http\Controllers\Api\ParcelTrackController;
+use App\Http\Controllers\Api\ApiKeyController;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,17 +33,27 @@ Route::post('merchant/login', [ApiMerchant::class,"login"]);
 Route::post('merchant/otpverify', [ApiMerchant::class,"phoneVerify"]);
 
 // Merchant Registration with OTP
-Route::post('/merchant/register', [ApiMerchant::class, 'register']);
+// Route::post('/merchant/register', [ApiMerchant::class, 'register']);
 Route::post('/merchant/verify-otp', [ApiMerchant::class, 'verifyOtp']);
-Route::post('merchant/request-otp', [ApiMerchant::class, 'requestEmailOtp']);
-Route::post('merchant/register-with-otp', [ApiMerchant::class, 'registerWithOtp']);
+Route::post('/merchant/register', [ApiMerchant::class, 'register']);  
 
-Route::post('merchant/register', [ApiMerchant::class,"register"]);
+//Registration step:1
+Route::post('merchant/request-otp', [ApiMerchant::class, 'requestEmailOtp']);
+//Registration step:2
+Route::post('/merchant/otp/verify', [ApiMerchant::class, 'otpVerify']);
+//Registration step:3
+Route::post('merchant/register-with-otp', [ApiMerchant::class, 'registerWithOtp']);
+ 
+
+
+// Route::post('merchant/register', [ApiMerchant::class,"register"]);
 Route::post('merchant/password/reset', [ApiMerchant::class,"passwordReset"]);
 Route::post('merchant/password/verify', [ApiMerchant::class,"verifyAndChangePassword"]);
 Route::post('merchant/password/change', [ApiMerchant::class, "changePassword"]);
 Route::post('merchant/password/email-reset', [ApiMerchant::class, 'requestEmailPasswordReset']);
 Route::post('merchant/password/email-verify', [ApiMerchant::class, 'verifyEmailPasswordReset']);
+// Route::get('merchant/dashboard/test/report/{id}', [ApiMerchant::class,"dashboardTest"]);
+// Route::get('merchant/dashboard/test2/report/{id}', [ApiMerchant::class,"dashboardTest2"]);
 Route::get('merchant/dashboard/report/{id}', [ApiMerchant::class,"dashboard"]);
 Route::get('merchant/profile', [ApiMerchant::class,"profile"]);
 Route::put('merchant/profile/update', [ApiMerchant::class,"profileUpdate"]);
@@ -73,6 +84,12 @@ Route::get('merchant/notice',[ApiMerchant::class,"notice"]);
 Route::get('merchant/return-payments', [ApiMerchant::class, 'apiReturnPayments']);
 Route::get('merchant/remittance-payments', [ApiMerchant::class, 'remittancePayments']);
 
+
+//temp
+// Route::post('admin/merchant-active-inactive', [ApiMerchant::class, 'adminMerchantStatusChange']);
+
+Route::get('merchant/get-status', [ApiMerchant::class, 'getMerchantStatus']);
+
 // Recent shipment status updates for merchant dashboard (mobile)
 Route::get('merchant/dashboard/shipments', [ApiMerchantDashboard::class, 'recentShipments']);
 
@@ -90,6 +107,7 @@ Route::post('deliveryman/login', [ApiDeliveryman::class,"login"]);
 Route::post('deliveryman/password/reset', [ApiDeliveryman::class,"passwordReset"]);
 Route::post('deliveryman/password/verify', [ApiDeliveryman::class,"verifyAndChangePassword"]);
 Route::get('deliveryman/dashboard/report', [ApiDeliveryman::class,"dashboard"]);
+
 Route::post('deliveryman/parcels/{search}', [ApiDeliveryman::class,"parcels"]);
 Route::post('deliveryman/parcel/{parcelId}', [ApiDeliveryman::class,"parcel"]);
 Route::post('deliveryman/parcel/status/update', [ApiDeliveryman::class,"parcelStatusUpdate"]);
@@ -99,6 +117,8 @@ Route::post('deliveryman/pickup/status/update', [ApiDeliveryman::class,"pickupSt
 Route::get('cities', [LocationController::class, 'cities']);
 Route::get('cities/{city}/towns', [LocationController::class, 'towns']);
 Route::get('merchant/parcel-list', [MerchantParcelController::class, 'index']);
+Route::get('merchant/parcel-list-month/{slug}', [MerchantParcelController::class, 'parcelListMonth']);
+Route::get('merchant/parcel-list-full/{slug}', [MerchantParcelController::class, 'parcelList']);
 Route::get('merchant/wallet-history', [MerchantWalletController::class, 'history']);
 Route::post('merchant/payment/return-invoice-details', [MerchantWalletController::class, 'returnInvoiceDetails']);
 Route::get('merchant/parcel/pending', [ApiMerchant::class, 'pendingParcels']);
@@ -109,4 +129,7 @@ Route::put('merchant/bank-account', [ApiMerchant::class, 'updateBankAccount']);
 Route::get('merchant/subscription-history', [ApiMerchant::class, 'subscriptionHistory']);
 Route::post('merchant/same-day-pickup-request', [ApiMerchant::class, 'sameDayPickupRequest']);
 Route::get('merchant/dashboard/current-month-stats', [ApiMerchant::class, 'currentMonthStats']);
+// Public API Key routes (no auth)
+Route::get('api-keys', [ApiKeyController::class, 'index']);
+Route::post('api-keys/{id}', [ApiKeyController::class, 'update']);
 Route::get('track/parcel/{trackid}', [ParcelTrackController::class, 'track']);

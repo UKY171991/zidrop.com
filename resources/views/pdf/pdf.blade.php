@@ -609,20 +609,22 @@
             @php $cod = $show_data->cod > 0 ? $show_data->cod : "00.00" @endphp
             @php $total = (float)$marchentAmount + (float) $show_data->deliveryCharge + (float)$show_data->codCharge + (float)$show_data->tax  + (float)$show_data->insurance   @endphp
 
-            <table class="" style="margin-top: 0px; width:100%; border: 2px solid rgb(122, 121, 121)">
+            <table class="" style="margin-top: 0px; width:100%; ">
                 <tr class=" top-border-none right-border-none"
-                    style="border: 2px solid rgb(122, 121, 121); border-top: none">
-                    <td class="no-border" style="width:15%; padding-left: 20px">
-                        <span style="text-align:right">
-                            <?php
-                    $Qrcode4 = DNS1D::getBarcodeSVG($show_data->trackingCode, 'C128', 2, 50, 'black', false);
-                    $Qrcode4 = str_replace('<?xml version="1.0" standalone="no"?>', '', $Qrcode4);
-                            echo $Qrcode4;
-                            ?>
-
+                    style="border-top: none">
+                    <td class="no-border" style="width:35%; padding: 8px;padding-left:10%;">
+                        <span style="text-align:right;padding: 10px;margin-left:20%;">
+                            {{-- @php echo DNS2D::getBarcodeSVG($show_data->trackingCode, 'QRCODE', 5, 5); @endphp --}}
+                            @php
+                                $svg = DNS2D::getBarcodeSVG($show_data->trackingCode, 'QRCODE', 5, 5);
+                                // Remove the XML declaration
+                                $svg = preg_replace('/<\?xml.*?\?>/', '', $svg);
+                                echo $svg;
+                            @endphp
                         </span>
                     </td>
-                    <td class="no-border" style="width:50%; text-align: left">
+
+                    <td class="no-border" style="width:65%; text-align: center">
                         @if ($show_data->parcel_source == 'p2p' && $show_data->p2p_payment_option == 'pay_later')
                             @php
                                 $discountamount = $show_data->discounted_value;
@@ -634,7 +636,7 @@
                             @endphp
                             <span>
                                 <h1 class="uppercase text-red"
-                                    style="font-family:dejavusans; margin-top:-50px; text-align: right; padding-right: 20px; font-weight:bold">
+                                    style="font-size:26px !important;font-family:dejavusans; margin-top:-50px; text-align: right; padding-right: 20px; font-weight:bold;">
                                     Amount Due: ₦{{ number_format($AmountDue, 2) }}
                                 </h1>
                             </span>
@@ -643,11 +645,11 @@
                                 $cod = $show_data->cod > 0 ? $show_data->cod : '00.00';
                             @endphp
                             <h1 class="uppercase text-red amontDue"
-                                style="font-family:dejavusans; margin-top:-50px; text-align: right; padding-right: 20px; font-weight:bold">
+                                style="font-size:26px; font-family:dejavusans; margin-top:-50px; text-align: right; padding-right: 20px; font-weight:bold">
                                 Amount Due: ₦{{ number_format($cod, 2) }}</h1>
                         @endif
                     </td>
-                    <td class="no-border"
+                    {{-- <td class="no-border"
                         style="font-family:dejavusans; font-size:12px; font-weight: bold; padding: 0px; width:35%; border:none">
                         <table class="no-border" style="border-left: 2px solid rgb(122, 121, 121); border-top:none">
                             <tr class="top-border-none"
@@ -718,7 +720,7 @@
                                 </tr>
                             @endif
                         </table>
-                    </td>
+                    </td> --}}
                 </tr>
 
             </table>

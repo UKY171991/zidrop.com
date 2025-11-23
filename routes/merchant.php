@@ -21,6 +21,7 @@ use App\Http\Controllers\Superadmin\SettingsController;
 
 
 Route::group(['namespace' => 'FrontEnd', 'middleware' => ['merchantauth']], function () {
+     Route::any('/merchant/selected-item-invoice', 'MerchantController@PrintSelectedItems')->name('merchant.parcel.PrintSelectedItems');
     // Merchant operation
     Route::get('merchant/dashboard', 'MerchantController@dashboard');
     Route::post('merchant/parcel/import', 'MerchantController@import');
@@ -40,6 +41,9 @@ Route::group(['namespace' => 'FrontEnd', 'middleware' => ['merchantauth']], func
     Route::get('merchant/stats', 'MerchantController@stats');
     Route::get('merchant/fraud-check', 'MerchantController@fraudcheck');
     Route::get('merchant/parcel/create', 'MerchantController@parcelcreate');
+     Route::get('merchant/parcel/bulk-upload', 'MerchantController@parcelbulkupload');
+     Route::get('merchant/parcel/template', 'MerchantController@bulkimporttemplate');
+    Route::post('merchant/parcel/bulk-import','MerchantController@postbulkimport');
     Route::get('merchant/pickup', 'MerchantController@pickup');
     Route::get('merchant/support', 'MerchantController@support');
     Route::get('merchant/parcel/track', 'MerchantController@track');
@@ -75,9 +79,13 @@ Route::group(['namespace' => 'FrontEnd', 'middleware' => ['merchantauth']], func
      // New
     //  Route::any('merchant/get_parcel_data_all', 'MerchantController@get_parcel_data_all');
      Route::any('merchant/get_parcel_data/{slug}', 'MerchantController@get_parcel_data');
+     // ** remove this after developement of way bill
+     // Route::any('merchant/get_parcel_dataTest/{slug}', 'MerchantController@get_parcel_dataTest');
+     // Route::any('merchant/get_parcel_data_monthTest/{slug}', 'MerchantController@get_parcel_data_monthTest');
+
           Route::any('merchant/get_parcel_data_month/{slug}', 'MerchantController@get_parcel_data_month');
-
-
+// ** remove this after developement of way bill
+Route::get('merchant/test/parcel_month/{slug}', 'MerchantController@parcelstatus_monthTest');
 });
 
 Route::group(['prefix' => 'merchant', 'namespace' => 'Admin', 'middleware' => ['merchantauth']], function () {

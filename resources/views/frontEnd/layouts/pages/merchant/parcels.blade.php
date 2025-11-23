@@ -5,6 +5,9 @@
 @section('title', 'MY ALL PARCEL')
 @endif
 @section('content')
+<script>
+    var showPrintButtons = @json(in_array(request()->segment(3), ['pending', 'picked-up']));
+</script>
 <div class="profile-edit mrt-30">
     <style>
         .cust-action-btn {
@@ -37,6 +40,17 @@
 	display: inline-block;
 }
 
+        .selectedItemshow {
+            display: inline;
+            background-color: #008B8B !important;
+            padding: 5px !important;
+            font-size: 14px;
+            color: #fff;
+            border-radius: 50px !important;
+            display: none;
+            margin-left: .5rem; 
+        }
+
     </style>
     <div class="row">
         <div class="col-lg-12 col-md-12 col-sm-12">
@@ -46,6 +60,7 @@
                 @else
                 <h5 class="pageStatusTitle">MY ALL PARCEL</h5>
                 @endif
+                 
             </div>
         </div>
         <div class="col-lg-12 col-md-12 col-sm-12">
@@ -88,6 +103,9 @@
                     <thead>
                         <tr>
                             {{-- <th>Test Id</th> --}}
+                                        <th>
+                 <input type="checkbox" id="My-Buttonn">
+            </th>
                             <th>Tracking ID</th>
                             <th>More</th>
                             <th>Date</th>
@@ -222,6 +240,7 @@
 <script>
     // view
     $(document.body).on('click', '#merchantParcel', function() {
+        // console.log('clicked');
         event.preventDefault();
         var type = $(this).data('type');
         var firstname = $(this).data('firstname');
@@ -294,8 +313,30 @@
         $('#Last_updated_at').html(createdDate);
         $('#merchantParcelUpdate').modal('show');
     });
+    var selectedItemshow = parseInt($(".selectedItemshow").text(), 10) || 0;
     $(document).ready(function(event) {
+         $('#My-Buttonn').prop('checked', false);
         var slug = '{{ $slug }}' ?? '';
+        $(document.body).on('change', '.selectItemCheckbox', function(event) {
+                    event.preventDefault();
+                    var ischecked = $(this).is(':checked');
+
+                    console.log(ischecked);
+                    if (!ischecked) {
+                        $(this).parent().parent().removeClass('selected');
+                        $("#My-Buttonn").prop('checked', false);
+                        selectedItemshow -= 1; // Decrement count
+                        if (selectedItemshow <= 0) {
+                            selectedItemshow = 0;
+                            $(".selectedItemshow").css('display', 'none');
+                        }
+                    } else {
+                        $(this).parent().parent().addClass('selected');
+                        selectedItemshow += 1; // Increment count
+                        $(".selectedItemshow").css('display', 'inline');
+                    }
+                    $(".selectedItemshow").text(selectedItemshow);
+                });
         var table33 = $('#example333').DataTable({
             processing: true,
             serverSide: true,
@@ -303,6 +344,9 @@
             sorting: false,
             responsive: true,
             Xscroll: true,
+            columnDefs: [
+            { orderable: false, targets: 0 }
+            ],
             lengthMenu: [
                 [10, 25, 50, -1],
                 ['10 rows', '25 rows', '50 rows', 'Show all']
@@ -315,111 +359,165 @@
             },
 
             dom: 'Bfrtip',
-            buttons: [
-                'pageLength',
-                {
-                    extend: 'copy',
-                    text: 'Copy',
-                    exportOptions: {
-                        columns: [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
-                        rows: function(idx, data, node) {
-                            let found = false;
-                            let selectedRowIndexes = table33.rows('.selected').indexes();
-                            for (let index = 0; index < selectedRowIndexes.length; index++) {
-                                if (idx == selectedRowIndexes[index]) {
-                                    found = true;
-                                    break;
-                                }
-                            }
-                            return found;
-                        }
-                    }
-                },
-                {
-                    extend: 'excel',
-                    text: 'Excel',
-                    exportOptions: {
-                        columns: [1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
-                        rows: function(idx, data, node) {
-                            let found = false;
-                            let selectedRowIndexes = table33.rows('.selected').indexes();
-                            for (let index = 0; index < selectedRowIndexes.length; index++) {
-                                if (idx == selectedRowIndexes[index]) {
-                                    found = true;
-                                    break;
-                                }
-                            }
-                            return found;
-                        }
-                    }
-                },
-                {
-                    extend: 'excel',
-                    text: 'D_Man',
-                    exportOptions: {
-                        columns: [1, 3, 4, 5, 7, 8, 10, 14],
-                        rows: function(idx, data, node) {
-                            let found = false;
-                            let selectedRowIndexes = table33.rows('.selected').indexes();
-                            for (let index = 0; index < selectedRowIndexes.length; index++) {
-                                if (idx == selectedRowIndexes[index]) {
-                                    found = true;
-                                    break;
-                                }
-                            }
-                            return found;
-                        }
-                    }
-                },
+            buttons: (function() {
+               let baseButton = [ 
+                // 'pageLength',
+                // {
+                //     extend: 'copy',
+                //     text: 'Copy',
+                //     exportOptions: {
+                //         columns: [2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18],
+                //         rows: function(idx, data, node) {
+                //             let found = false;
+                //             let selectedRowIndexes = table33.rows('.selected').indexes();
+                //             for (let index = 0; index < selectedRowIndexes.length; index++) {
+                //                 if (idx == selectedRowIndexes[index]) {
+                //                     found = true;
+                //                     break;
+                //                 }
+                //             }
+                //             return found;
+                //         }
+                //     }
+                // },
+                // {
+                //     extend: 'excel',
+                //     text: 'Excel',
+                //     exportOptions: {
+                //         columns: [2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+                //         rows: function(idx, data, node) {
+                //             let found = false;
+                //             let selectedRowIndexes = table33.rows('.selected').indexes();
+                //             for (let index = 0; index < selectedRowIndexes.length; index++) {
+                //                 if (idx == selectedRowIndexes[index]) {
+                //                     found = true;
+                //                     break;
+                //                 }
+                //             }
+                //             return found;
+                //         }
+                //     }
+                // },
+                // {
+                //     extend: 'excel',
+                //     text: 'D_Man',
+                //     exportOptions: {
+                //         columns: [2, 3, 5, 7, 8, 10, 14],
+                //         rows: function(idx, data, node) {
+                //             let found = false;
+                //             let selectedRowIndexes = table33.rows('.selected').indexes();
+                //             for (let index = 0; index < selectedRowIndexes.length; index++) {
+                //                 if (idx == selectedRowIndexes[index]) {
+                //                     found = true;
+                //                     break;
+                //                 }
+                //             }
+                //             return found;
+                //         }
+                //     }
+                // },
 
-                {
-                    extend: 'print',
-                    text: 'Print',
-                    exportOptions: {
-                        columns: [1, 3, 4, 5, 6, 7, 8, 9, 10],
-                        rows: function(idx, data, node) {
-                            let found = false;
-                            let selectedRowIndexes = table33.rows('.selected').indexes();
-                            for (let index = 0; index < selectedRowIndexes.length; index++) {
-                                if (idx == selectedRowIndexes[index]) {
-                                    found = true;
-                                    break;
-                                }
-                            }
-                            return found;
-                        }
-                    }
-                },
+               
+                // {
+                //     extend: 'colvis',
+                // }
+            ];
+                if (showPrintButtons) {
+            // baseButton.push(
+            //     {
+                   
+            //         text: '<i class="fa fa-print"></i> Print',
+            //         exportOptions: {
+            //             columns: [2, 3, 5, 6, 7, 8, 9, 10, 11],
+            //             rows: function(idx, data, node) {
+            //                 return table33.rows('.selected').indexes().toArray().includes(idx);
+            //             }
+            //         }
+            //     }
+            // );
+            
+            setTimeout(function() {
+            if (showPrintButtons) {
+        $('.dt-buttons').append(
+            '<button id="PrintSelectedItemsInvoice" class="btn btn-secondary " >' +
+            '<i class="fa fa-print"></i> Print Waybill</button>'
+        );
+            }
+        }, 500);
+        setTimeout(function() {
+            // Append to DataTables button container
+            $('.dt-buttons').append('<p class="selectedItemshow" style="">0</p>');
+                }, 700);
+            }
+            return baseButton;
 
-                {
-                    extend: 'print',
-                    text: 'Print all',
-                    exportOptions: {
-                        columns: [1, 3, 4, 5, 6, 7, 8, 9, 10],
-                        rows: function(idx, data, node) {
-                            let found = true;
-                            let selectedRowIndexes = table33.rows('.selected').indexes();
-                            for (let index = 0; index < selectedRowIndexes.length; index++) {
-                                if (idx == selectedRowIndexes[index]) {
-                                    found = false;
-                                    break;
-                                }
-                            }
-                            return found;
-                        }
-                    }
-                },
-                {
-                    extend: 'colvis',
-                },
 
-            ],
+            })
+            (),
             createdRow: function(row, data, dataIndex) {
                 // Add your desired class to each <tr> element
                 $(row).addClass('data_all_trs');
             }
 
         });
+
+        $(document.body).on('change', '#My-Buttonn', function() {
+                    // event.preventDefault();
+                    var ischecked = $(this).is(':checked');
+                    selectedItemshow = 0;
+                    console.log(ischecked);
+                    if (!ischecked) {
+                        $(".selectItemCheckbox").removeAttr('checked');
+                        $("#example333 tbody tr").removeClass('selected');
+                        $(".selectItemCheckbox").each(function() {
+                            this.checked = false;
+                            selectedItemshow -= 1; // Decrement count
+                            if (selectedItemshow <= 0) {
+                                selectedItemshow = 0;
+                                $(".selectedItemshow").css('display', 'none');
+                            }
+                        });
+
+                    } else {
+                        $(".selectItemCheckbox").attr('checked');
+                        $("#example333 tbody tr").addClass('selected');
+                        // checked all checkbox
+                        $(".selectItemCheckbox").each(function() {
+                            this.checked = true;
+                            selectedItemshow += 1; // Increment count
+                            $(".selectedItemshow").css('display', 'inline');
+                        });
+                    }
+                    $(".selectedItemshow").text(selectedItemshow);
+                });
+         
+             $(document).on('click', '#PrintSelectedItemsInvoice', function(event) {
+                    
+                    console.log('Print Selected Items Invoice clicked');
+
+                    var parcels = [];
+
+                    $(':checkbox:checked').each(function() {
+                        var value = $(this).val();
+                        if (value !== 'on') {
+                            parcels.push(value);
+                        }
+                    });
+
+                    if (parcels.length === 0) {
+                        alert('Alert: Please select at least 1 parcel');
+                        return;
+                    }
+
+                    var url = "{{ route('merchant.parcel.PrintSelectedItems') }}?parcels=" + parcels.join(',');
+
+                    window.open(url, '_blank'); // Open the PDF in a new tab
+                });
+               
+        
+    });
+   
+
 
         // Searching
         $('#SearchDtataButton').click(function() {
@@ -576,6 +674,6 @@
 
             });
         });
-    });
+    
 </script>
 @endsection

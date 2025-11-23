@@ -6,13 +6,17 @@ use App\Deliverycharge;
 use App\Disclamer;
 use App\Http\Controllers\Controller;
 use App\Mail\AddMerchantBalanceMail; 
+use App\Mail\MerchantSubscriptionEmail;
 use App\Mail\SubtractMerchantBalanceMail;
 use App\Merchant;
 use App\Merchantcharge;
 use App\Merchantpayment;
 use App\Merchantreturnpayment;
+use App\MerchantSubscriptions;
 use App\Nearestzone;
 use App\Parcel;
+use App\History;
+use App\SubscriptionsPlan;
 use App\RemainTopup;
 use App\Topup;
 use Brian2694\Toastr\Facades\Toastr;
@@ -163,6 +167,82 @@ class MerchantOperationController extends Controller {
         return view('backEnd.merchant.manage', compact('merchants', 'show_data'));
     }
 
+    public function subsplanactivation(Request $request, $id) {
+        $merchant_id = $id;
+        
+        // Get Package 
+            $SubsPlan = SubscriptionsPlan::findOrFail($request->subs_plan_id);
+            // Get Merchant
+            $Merchant = Merchant::findOrFail($merchant_id);
+            
+            // Remove manual permission based on subscription plan
+            switch ($request->subs_plan_id) {
+                case 1: // Starter
+                    $Merchant->cod_cal_permission = 0;
+                    $Merchant->ins_cal_permission = 1;
+                    $Merchant->ins_cal_permission = 1;
+                    break;
+                    
+                case 2: // Premium
+                    $Merchant->cod_cal_permission = 0;
+                    $Merchant->ins_cal_permission = 0;
+                    break;
+            
+                default:
+                    // Optionally reset or skip updates for unrecognized plan
+                    break;
+            }
+            
+            $Merchant->update();
+            
+            // find old activate package and delete it
+            MerchantSubscriptions::where('merchant_id', $merchant_id)
+            ->where('is_active', 1)
+            ->update([
+                    'is_active' => 0,
+                    'auto_renew' => 0,
+                    'auto_expired' => 0,
+                ]);
+                
+                // Assign Subscription To merchant
+                $MerchantSubscriptions = new MerchantSubscriptions();
+                $MerchantSubscriptions->subs_pkg_id   = $SubsPlan->id;
+                $MerchantSubscriptions->merchant_id   = $Merchant->id;
+                $MerchantSubscriptions->assign_time   = now();
+                $MerchantSubscriptions->expired_time  = '2099-12-31 23:59:59';
+                $MerchantSubscriptions->is_active     = 1;
+                $MerchantSubscriptions->auto_renew    = 1;
+                $MerchantSubscriptions->auto_expired    = 0;
+                $MerchantSubscriptions->remarks       = 'subs';
+                $MerchantSubscriptions->assign_by     = 'admin';
+                $MerchantSubscriptions->assign_by_id  =  1;
+                $MerchantSubscriptions->save();
+                
+                
+                // History
+                $history            = new History();
+                $history->name      = "Subscription Activated";
+                $history->done_by   = "admin";
+                $history->status    = 'subscription_activated';
+                $history->note      = "Activated subscription for merchant ID: {$Merchant->id}";
+                $history->date      =  now();
+                $history->save();
+                
+             
+
+                // dd(env('MAIL_ADMIN_ADDRESS'));
+                // Send Email Notifications
+                try {
+                \Mail::to($Merchant->emailAddress)->send(new MerchantSubscriptionEmail($Merchant, $SubsPlan, $history, 'merchant', $MerchantSubscriptions));
+                \Mail::to(env('MAIL_ADMIN_ADDRESS'))->send(new MerchantSubscriptionEmail($Merchant, $SubsPlan, $history, 'admin', $MerchantSubscriptions));
+            } catch (\Exception $exception) {
+                // dd($exception->getMessage()); // ?? shows the actual error message
+                Log::warning('Subscription mail failed: ' . $exception->getMessage());
+            }
+
+            Toastr::success('success', 'Merchant Subscription Activated successfully!');
+            return redirect()->back();
+    }
     public function merchantrequest() {
         $merchants = Merchant::where('verifyToken', 0)->orderBy('id', 'DESC')->get();
 
@@ -172,14 +252,82 @@ class MerchantOperationController extends Controller {
     public function profileedit($id) {
         $merchantInfo = Merchant::find($id);
         $nearestzones = Nearestzone::where('status', 1)->get();
+        $activeSubPlan = MerchantSubscriptions::with('plan')->where('merchant_id', $id)->where('is_active', 1)->first();
         $allpackage   = Deliverycharge::where(['status' => 1])->with(['merchantcharge' => function ($dcharge) use ($id) {
             $dcharge->where('merchantId', $id);
         },
         ])
             ->get();
 
-        return view('backEnd.merchant.edit', compact('merchantInfo', 'nearestzones', 'allpackage'));
+         $SubsHistos = MerchantSubscriptions::with('plan')
+        ->where('merchant_id', $id)
+        ->orderByDesc('created_at')
+        ->limit(20)
+        ->get()
+        ->map(function ($item) {
+            $item->formatted_date = \Carbon\Carbon::parse($item->assign_time)->format('d/m/Y');
+            $item->formatted_time = \Carbon\Carbon::parse($item->assign_time)->format('j M Y') . ' To ' . \Carbon\Carbon::parse($item->expired_time)->format('j M Y');
+            return $item;
+        });     
+
+        return view('backEnd.merchant.edit', compact('merchantInfo', 'nearestzones', 'allpackage', 'SubsHistos', 'activeSubPlan'));
     }
+
+
+     public function disablesubsplan(Request $request, $plan_id, $merchant_id)
+    {    
+        $subs = MerchantSubscriptions::where('subs_pkg_id', $plan_id)
+            ->where('merchant_id', $merchant_id)
+            ->where('is_active', 1)
+            ->first();
+    
+        if (!$subs) {
+            return redirect()->back()->with('error', 'Active subscription not found.');
+        }
+    
+        $subs->is_active = 0;
+        $subs->auto_renew = 0;
+        $subs->disable_by = 'admin';
+        $subs->disable_by_id = 1;
+        $subs->disable_time = now();
+        $subs->save();
+
+
+
+        // Remove manual permission based on subscription plan
+        // Get Merchant
+        $Merchant = Merchant::findOrFail($subs->merchant_id );
+        switch ($subs->subs_pkg_id ) {
+            case 1: // Starter
+                $Merchant->cod_cal_permission = 1;
+                $Merchant->ins_cal_permission = 1;
+                break;
+        
+            case 2: // Premium
+                $Merchant->cod_cal_permission = 1;
+                $Merchant->ins_cal_permission = 1;
+                break;
+        
+            default:
+                // Optionally reset or skip updates for unrecognized plan
+                break;
+        }
+
+         // History
+                $history            = new History();
+                $history->name      = "Subscription Disabled";
+                $history->done_by   = "admin";
+                $history->status    = 'subscription_disabled';
+                $history->note      = "Disabled subscription for merchant ID: {$Merchant->id}";
+                $history->date      =  now();
+                $history->save();
+        
+        $Merchant->update();
+        
+        Toastr::success('Success!', 'Thanks! Your subscription disable successfully');
+        return redirect()->back();
+    }
+
 
     // Merchant Profile Edit
     public function profileUpdate(Request $request) {

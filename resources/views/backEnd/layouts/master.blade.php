@@ -445,7 +445,7 @@
                                         <a href="{{ url('2fa') }}" class="nav-link">&nbsp;&nbsp;&nbsp;
                                             {{-- <i class="fa fa-lock"></i>&nbsp; --}}
                                             <i class="fas fa-angle-right"></i>&nbsp;
-                                            <p>2 Step Varification</p>
+                                            <p>2-Step Verification</p>
                                         </a>
                                     </li>
                                     <li class="nav-item">
@@ -595,7 +595,7 @@
                                 <a href="#" class="nav-link">
                                     <i class="fas fa-users"></i>
                                     <p>
-                                        Agent
+                                        Agents/Hubs
                                         <i class="right fa fa-angle-left"></i>
                                     </p>
                                 </a>
@@ -632,7 +632,7 @@
                                         <a href="{{ url('/author/agent/notice') }}" class="nav-link">&nbsp;&nbsp;
                                             <i class="fas fa-home"></i> &nbsp;
 
-                                            <p>Agent Notice</p>
+                                            <p>Agent/Hub Notice</p>
                                         </a>
                                     </li>
 
@@ -965,7 +965,7 @@
                                 <li class="nav-item">
                                     <a href="{{ route('expense-report') }}" class="nav-link">
                                         <i class="fas fa-cicle-o"></i>
-                                        <p>Expense Report</p>
+                                        <p>Expense</p>
                                     </a>
                                 </li>
                             </ul>
@@ -1067,7 +1067,7 @@
         <div class="search-product-inner" id="live_data_show"></div>
 
         <footer class="main-footer">
-            <strong>Copyright &copy;<a href="{{ url('/') }}">Zidrop Logistics</a></strong>
+            <strong>Copyright &copy;<a href="{{ url('/') }}">ZiDrop Logistics</a></strong>
         </footer>
         <!--Add/Edit Expense Modal -->
         <div class="modal fade" id="ExpensepublicModal" tabindex="-1" role="dialog"

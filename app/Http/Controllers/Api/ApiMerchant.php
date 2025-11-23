@@ -8,6 +8,7 @@ use App\Deliveryman;
 use App\Disclamer;
 use App\Http\Controllers\Controller;
 use App\Mail\MerchantRegistrationEmail;
+use App\Mail\MerchantRegisterAlertMailable;
 use App\Mail\NewPickupRequestEmail;
 use App\Merchant;
 use App\Merchantcharge;
@@ -25,6 +26,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Mail;
 use Session;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Validator;
+
 
 class ApiMerchant extends Controller {
 
@@ -34,6 +38,24 @@ class ApiMerchant extends Controller {
     }
 
     public function storePayment(Request $request) {
+        $validator = Validator::make($request->all(), [
+        'merchant_id' => 'required',
+        'email'       => 'required',
+        'amount'      => 'required',
+        'reference'   => 'required',
+        'status'      => 'required',
+        'channel'     => 'required',
+        'currency'    => 'required',
+        'mobile'      => 'required',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status'  => 'error',
+            'message' => 'Validation failed.',
+            'errors'  => $validator->errors(),
+        ], 422);
+    }
         $topup = Topup::create([
             'merchant_id' => $request->merchant_id,
             'email'       => $request->email,
@@ -93,13 +115,56 @@ class ApiMerchant extends Controller {
             } catch (\Exception $exception) {
                 \Log::info('API--Merchant-Register mail error: ' . $exception->getMessage());
             }
+             $receiverEmail = 'e-tailing@zidrop.com';
+            try {
+                Mail::to($receiverEmail)->send(new \App\Mail\MerchantRegisterAlertMailable($store_data));
+            } catch (\Exception $exception) {
+                Log::info('Merchant-Register-Alert mail error: ' . $exception->getMessage());
+            }
+        }else{
+            try {
+                Mail::to($store_data->emailAddress)->send(new MerchantRegistrationEmail($store_data));
+            } catch (\Exception $exception) {
+                Log::info('Merchant-Register mail error: ' . $exception->getMessage());
+            }
+
+            // Send an email to Admin to notify about the new merchant registration
+            $receiverEmail = 'e-tailing@zidrop.com';
+           
+            try {
+                Mail::to($receiverEmail)->send(new \App\Mail\MerchantRegisterAlertMailable($store_data));
+            } catch (\Exception $exception) {
+                Log::info('Merchant-Register-Alert mail error: ' . $exception->getMessage());
+            }
         }
 
         return [
             "success" => true,
-            "message" => "Thanks for registration, Please verify your email with the OTP sent.",
+            "message" => "Thanks for registration",
             "data" => ["merchant_id" => $store_data->id, "email" => $store_data->emailAddress]
         ];
+    }
+    public function otpVerify(Request $request){
+        
+        $request->validate([
+            'emailAddress' => 'required|email',
+            'otp' => 'required',
+            
+        ]);
+        $email = $request->emailAddress;
+        $otp = $request->otp;
+        $otpRow = \App\EmailOtp::where('email', $email)
+            ->where('otp', $otp)
+            ->where('expires_at', '>', now())
+            ->first();
+        if ($otpRow) {
+            return response()->json(['success' => true, 'message' => 'valid otp'], 200);
+        }
+        else{
+             return response()->json(['success' => false, 'message' => 'Invalid or expired OTP.'], 400);
+
+        }
+
     }
 
     /**
@@ -113,7 +178,7 @@ class ApiMerchant extends Controller {
             return ["success" => false, "message" => "Merchant not found."];
         }
         if ($merchant->verifyToken == $request->otp) {
-            $merchant->status = 1;
+            // $merchant->status = 1;
             $merchant->verifyToken = null;
             $merchant->save();
             return ["success" => true, "message" => "Your account is verified and activated."];
@@ -123,7 +188,7 @@ class ApiMerchant extends Controller {
     }
 
     /**
-     * Request OTP for email registration (step 1)
+     * Request OTP for email registration 
      * POST /api/merchant/request-otp
      * Body: emailAddress
      */
@@ -153,7 +218,7 @@ class ApiMerchant extends Controller {
     }
 
     /**
-     * Register merchant after OTP verification (step 2)
+     * Register merchant after OTP verification 
      * POST /api/merchant/register-with-otp
      * Body: emailAddress, otp, companyName, firstName, lastName, phoneNumber, password, agree
      */
@@ -193,12 +258,23 @@ class ApiMerchant extends Controller {
         $merchant->phoneNumber = $request->phoneNumber;
         $merchant->emailAddress = $email;
         $merchant->agree = $request->agree;
-        $merchant->status = 1; // Active
+        $merchant->status = 0; // Active
         $merchant->verifyToken = null;
         $merchant->password = bcrypt($request->password);
         $merchant->save();
         // Delete OTP after use
         $otpRow->delete();
+          try {
+                \Illuminate\Support\Facades\Mail::to($merchant->emailAddress)->send(new \App\Mail\MerchantRegistrationEmail($merchant));
+            } catch (\Exception $exception) {
+                \Log::info('API--Merchant-Register mail error: ' . $exception->getMessage());
+            }
+             $receiverEmail = 'e-tailing@zidrop.com';
+            try {
+                Mail::to($receiverEmail)->send(new \App\Mail\MerchantRegisterAlertMailable($merchant));
+            } catch (\Exception $exception) {
+                Log::info('Merchant-Register-Alert mail error: ' . $exception->getMessage());
+            }
         return response()->json([
             'success' => true,
             'message' => 'Registration successful.',
@@ -451,20 +527,181 @@ class ApiMerchant extends Controller {
             'parcels' => $parcels
         ]);
     }
+//     public function dashboardTest2($merchantID): JsonResponse
+// {
+//     try {
+//         $now = now();
+//         $data = [];
+
+//         $statuses = [
+//             'pending'         => 1,
+//             'pick'            => 2,
+//             'await'           => 3,
+//             'deliver'         => 4,
+//             'partial_deliver' => 6,
+//             'return'          => 8,
+//             'da'              => 10,
+//             'paid'            => 11,
+//             'hold'            => 5,
+//             'returntohub'     => 7,
+//             'cancel'          => 9,
+//         ];
+
+//         // Monthly stats
+//         foreach ($statuses as $key => $status) {
+//             $data["m_$key"] = Parcel::where('merchantId', $merchantID)
+//                 ->whereYear('updated_at', $now)
+//                 ->whereMonth('updated_at', $now)
+//                 ->where('status', $status)
+//                 ->count();
+//         }
+
+//         // Monthly wallet sum
+//         $data['m_wallet'] = RemainTopup::where('merchant_id', $merchantID)
+//             ->whereYear('updated_at', $now)
+//             ->whereMonth('updated_at', $now)
+//             ->sum('amount');
+
+//         // Total stats
+//         foreach ($statuses as $key => $status) {
+//             $data["t_$key"] = Parcel::where('merchantId', $merchantID)
+//                 ->where('status', $status)
+//                 ->count();
+//         }
+
+//         // Recent parcels with relations
+//         $data['parcels'] = Parcel::where('merchantId', $merchantID)
+//             ->orderByDesc('updated_at')
+//             ->limit(50)
+//             ->with(['merchant', 'parcelnote', 'pickupcity', 'deliverycity', 'pickuptown', 'deliverytown'])
+//             ->get();
+
+//         // Month list
+//         $months = collect([
+//             "January", "February", "March", "April", "May", "June",
+//             "July", "August", "September", "October", "November", "December",
+//         ]);
+
+//         // Delivered parcels (monthly)
+//         $deliveredRaw = Parcel::selectRaw("DATE_FORMAT(updated_at, '%M %Y') as month_year, COUNT(*) as count")
+//             ->where('merchantId', $merchantID)
+//             ->whereIn('status', [4, 6])
+//             ->whereYear('updated_at', $now->year)
+//             ->groupBy('month_year')
+//             ->orderByRaw("MONTH(updated_at)")
+//             ->pluck('count', 'month_year');
+
+//         // Pickup parcels (monthly)
+//         $pickupRaw = Parcel::selectRaw("DATE_FORMAT(created_at, '%M %Y') as month_year, COUNT(*) as count")
+//             ->where('merchantId', $merchantID)
+//             ->whereIn('status', [2, 3, 4, 5, 6, 7, 8, 10, 11, 12])
+//             ->whereYear('created_at', $now->year)
+//             ->groupBy('month_year')
+//             ->orderByRaw("MONTH(created_at)")
+//             ->pluck('count', 'month_year');
+
+//         $year = $now->year;
+
+//         $data['deliveredParcels'] = $months->map(fn($month) => [
+//             'month' => "$month $year",
+//             'count' => $deliveredRaw["$month $year"] ?? 0,
+//         ]);
+
+//         $data['pickupParcels'] = $months->map(fn($month) => [
+//             'month' => "$month $year",
+//             'count' => $pickupRaw["$month $year"] ?? 0,
+//         ]);
+
+//         // Disclaimer
+//         $data['notice'] = Disclamer::find(1);
+
+//         // Merchant data
+//         $merchant = Merchant::with('parcels')->findOrFail($merchantID);
+//         $data['merchant'] = $merchant;
+
+//         // Return to merchant charge
+//         $parcelType = Parceltype::where('slug', 'return-to-merchant')->first();
+//         $retMerCharge = 0;
+
+//         $returnParcels = Parcel::where('merchantId', $merchantID)
+//             ->where('status', $parcelType->id ?? -1)
+//             ->where('deliveryCharge', '>', 0)
+//             ->where('pay_return', 0)
+//             ->get();
+
+//         if ($returnParcels->isNotEmpty() && $merchant->pay_return == 0) {
+//             $retMerCharge = $returnParcels->sum(fn($p) => $p->deliveryCharge + $p->tax + $p->insurance);
+//         }
+
+//         $data['retmercharge'] = $retMerCharge;
+
+//         // Merchant due
+//         $merchantDue = $merchant->parcels
+//             ->whereIn('status', [4, 6])
+//             ->sum('merchantDue');
+
+//         $data['merchantDueamount'] = $merchantDue;
+
+//         // Merchant paid total
+//         $data['merchantspaid'] = Parcel::where('merchantId', $merchantID)->sum('merchantPaid');
+
+//         return response()->json([
+//             'status' => 'success',
+//             'data' => $data,
+//         ]);
+//     } catch (\Throwable $e) {
+//         Log::error('Dashboard fetch error', [
+//             'merchant_id' => $merchantID,
+//             'error' => $e->getMessage(),
+//             'trace' => $e->getTraceAsString()
+//         ]);
+
+//         return response()->json([
+//             'status' => 'error',
+//             'message' => 'Failed to fetch dashboard data.',
+//             'error' => $e->getMessage(),
+//         ], 500);
+//     }
+// }
+
+    
 
     function dashboard($id) {
 
         $data = [];
         //this month
-        $data['m_pending']         = Parcel::where('merchantId', $id)->whereMonth('updated_at', now())->whereYear('updated_at', now())->where('status', 1)->count();
-        $data['m_pick']            = Parcel::where('merchantId', $id)->whereMonth('updated_at', now())->whereYear('updated_at', now())->where('status', 2)->count();
-        $data['m_await']           = Parcel::where('merchantId', $id)->whereMonth('updated_at', now())->whereYear('updated_at', now())->where('status', 3)->count();
-        $data['m_deliver']         = Parcel::where('merchantId', $id)->whereMonth('updated_at', now())->whereYear('updated_at', now())->where('status', 4)->count();
-        $data['m_partial_deliver'] = Parcel::where('merchantId', $id)->whereMonth('updated_at', now())->whereYear('updated_at', now())->where('status', 6)->count();
-        $data['m_return']          = Parcel::where('merchantId', $id)->whereMonth('updated_at', now())->whereYear('updated_at', now())->where('status', 8)->count();
-        $data['m_da']              = Parcel::where('merchantId', $id)->whereMonth('updated_at', now())->whereYear('updated_at', now())->where('status', 10)->count();
-        $data['m_hold']            = Parcel::where('merchantId', $id)->whereMonth('updated_at', now())->whereYear('updated_at', now())->where('status', 5)->count();
-        $data['m_wallet']          = RemainTopup::where('merchant_id', $id)->sum('amount');
+        // $data['m_pending']         = Parcel::where('merchantId', $id)->whereMonth('updated_at', now())->whereYear('updated_at', now())->where('status', 1)->count();
+        // $data['m_pick']            = Parcel::where('merchantId', $id)->whereMonth('updated_at', now())->whereYear('updated_at', now())->where('status', 2)->count();
+        // $data['m_await']           = Parcel::where('merchantId', $id)->whereMonth('updated_at', now())->whereYear('updated_at', now())->where('status', 3)->count();
+        // $data['m_deliver']         = Parcel::where('merchantId', $id)->whereMonth('updated_at', now())->whereYear('updated_at', now())->where('status', 4)->count();
+        // $data['m_partial_deliver'] = Parcel::where('merchantId', $id)->whereMonth('updated_at', now())->whereYear('updated_at', now())->where('status', 6)->count();
+        // $data['m_return']          = Parcel::where('merchantId', $id)->whereMonth('updated_at', now())->whereYear('updated_at', now())->where('status', 8)->count();
+        // $data['m_da']              = Parcel::where('merchantId', $id)->whereMonth('updated_at', now())->whereYear('updated_at', now())->where('status', 10)->count();
+        // $data['m_hold']            = Parcel::where('merchantId', $id)->whereMonth('updated_at', now())->whereYear('updated_at', now())->where('status', 5)->count();
+        // $data['m_wallet']          = RemainTopup::where('merchant_id', $id)->sum('amount');
+
+        // //total
+        // $data['t_pending']         = Parcel::where('merchantId', $id)->where('status', 1)->count();
+        // $data['t_pick']            = Parcel::where('merchantId', $id)->where('status', 2)->count();
+        // $data['t_await']           = Parcel::where('merchantId', $id)->where('status', 3)->count();
+        // $data['t_deliver']         = Parcel::where('merchantId', $id)->where('status', 4)->count();
+        // $data['t_partial_deliver'] = Parcel::where('merchantId', $id)->where('status', 6)->count();
+        // $data['t_return']          = Parcel::where('merchantId', $id)->where('status', 8)->count();
+        // $data['t_da']              = Parcel::where('merchantId', $id)->where('status', 10)->count();
+        // $data['t_hold']            = Parcel::where('merchantId', $id)->where('status', 5)->count();
+        $data['m_pending']         = Parcel::where('merchantId', $id)->whereYear('updated_at', now())->whereMonth('updated_at', now())->where('status', 1)->count();
+        $data['m_pick']            = Parcel::where('merchantId', $id)->whereYear('updated_at', now())->whereMonth('updated_at', now())->where('status', 2)->count();
+        $data['m_await']           = Parcel::where('merchantId', $id)->whereYear('updated_at', now())->whereMonth('updated_at', now())->where('status', 3)->count();
+        $data['m_deliver']         = Parcel::where('merchantId', $id)->whereYear('updated_at', now())->whereMonth('updated_at', now()->month)->where('status', 4)->count();
+        $data['m_partial_deliver'] = Parcel::where('merchantId', $id)->whereYear('updated_at', now())->whereMonth('updated_at', now())->where('status', 6)->count();
+        $data['m_return']          = Parcel::where('merchantId', $id)->whereYear('updated_at', now())->whereMonth('updated_at', now())->where('status', 8)->count();
+        $data['m_da']              = Parcel::where('merchantId', $id)->whereYear('updated_at', now())->whereMonth('updated_at', now())->where('status', 10)->count();
+        $data['m_paid']            = Parcel::where('merchantId', $id)->whereYear('updated_at', now())->whereMonth('updated_at', now())->where('status', 11)->count();
+        $data['m_hold']            = Parcel::where('merchantId', $id)->whereYear('updated_at', now())->whereMonth('updated_at', now())->where('status', 5)->count();
+        $data['m_wallet']          = RemainTopup::where('merchant_id', $id)->whereYear('updated_at', now())->whereMonth('updated_at', now())->sum('amount');
+        $data['m_pickedup']            = Parcel::where('merchantId', $id)->whereYear('updated_at', now())->whereMonth('updated_at', now())->where('status', 12)->count();
+         $data['m_cancel']            = Parcel::where('merchantId', $id)->whereYear('updated_at', now())->whereMonth('updated_at', now())->where('status', 9)->count();
+        $data['m_returntohub']     = Parcel::where('merchantId', $id)->whereYear('updated_at', now())->whereMonth('updated_at', now())->where('status', 7)->count();
 
         //total
         $data['t_pending']         = Parcel::where('merchantId', $id)->where('status', 1)->count();
@@ -475,13 +712,19 @@ class ApiMerchant extends Controller {
         $data['t_return']          = Parcel::where('merchantId', $id)->where('status', 8)->count();
         $data['t_da']              = Parcel::where('merchantId', $id)->where('status', 10)->count();
         $data['t_hold']            = Parcel::where('merchantId', $id)->where('status', 5)->count();
+        $data['t_paid']            = Parcel::where('merchantId', $id)->where('status', 11)->count();
+        $data['t_returntohub']     = Parcel::where('merchantId', $id)->where('status', 7)->count();
+        $data['t_cancel']          = Parcel::where('merchantId', $id)->where('status', 9)->count();
+        $data['t_pickedup']            = Parcel::where('merchantId', $id)->where('status', 12)->count();
+        $merchantdata     = Merchant::where('id', $id)->first();
+        $data['t_wallet'] = $merchantdata->balance;
 
         $data['parcels'] = Parcel::where('merchantId', $id)->orderBy('updated_at', 'DESC')->limit(50)->with('merchant', 'parcelnote')
             ->get();
 
         $data['notice'] = Disclamer::find(1);
 
-        $data['merchant'] = DB::table('merchants')->where('id', $id)->first();
+        $data['merchant'] = $merchantdata;
 
         return $data;
     }
@@ -585,6 +828,7 @@ class ApiMerchant extends Controller {
         $merchant = Merchant::find($merchantId);
 
         $charge     = \App\ChargeTarif::where('pickup_cities_id', $request->pickupcity)->where('delivery_cities_id', $request->deliverycity)->first();
+       
 
         if (!$charge) {
             return response()->json(['success' => false, 'message' => 'Charge tariff not found for the selected cities.'], 404);
@@ -677,7 +921,8 @@ class ApiMerchant extends Controller {
         $store_parcel->recipientPhone   = $request->phonenumber;
         $store_parcel->productWeight    = $weight;
         $store_parcel->trackingCode     = 'ZD' . mt_rand(1111111111, 9999999999);
-        $store_parcel->note             = $request->note;
+        $store_parcel->order_number      = $request->order_number;
+        // $store_parcel->note             = $request->note;
         $store_parcel->deliveryCharge   = $deliverycharge;
         $store_parcel->tax                = $tax;
         $store_parcel->insurance          = $merchant->ins_cal_permission == 0 ? 0 : $insurance;
@@ -694,6 +939,8 @@ class ApiMerchant extends Controller {
         $store_parcel->merchantAmount   = $merchantAmount;
         $store_parcel->merchantDue      = $merchantDue;
         $store_parcel->orderType        = $request->package;
+       // $store_parcel->address          = $request->address;
+        $store_parcel->note             = $request->note;
         $store_parcel->codType          = 1;
         $store_parcel->status           = 1;
         $store_parcel->save();
@@ -707,8 +954,19 @@ class ApiMerchant extends Controller {
             ]);
         }
 
+        // $note           = new Parcelnote();
         $note           = new Parcelnote();
+        $note->parcelId = $store_parcel->id;
+        $note->note     = 'Pending Pickup';
+        $note->save();
 
+        // Return a proper JSON response
+        return response()->json([
+            'success' => true,
+            'message' => 'Parcel created successfully.',
+            'order_no' => $store_parcel->trackingCode,
+            //'data' => $store_parcel
+        ], 201);
     }
 
     public function calculateDeliveryCharge(Request $request)
@@ -1014,6 +1272,36 @@ class ApiMerchant extends Controller {
 
         return response()->json(['tax_charge' => $tax]);
     }
+
+    public function adminMerchantStatusChange(Request $request)
+    {
+        $merchantId = $request->input('merchant_id');
+        $merchant = Merchant::find($merchantId);
+        if (!$merchant) {
+            return response()->json(['success' => false, 'message' => 'Merchant not found.'], 404);
+        }
+        // Toggle status
+        if ($merchant->status == 1) {
+            $merchant->status = 0;
+        } else if ($merchant->status == 0) {
+            $merchant->status = 1;
+        }
+        $merchant->save();
+        return response()->json(['success' => true, 'status' => $merchant->status]);
+    }
+
+    // GET method: fetch merchant status by merchant_id
+    public function getMerchantStatus(Request $request)
+    {
+        $merchantId = $request->input('merchant_id');
+        $merchant = Merchant::find($merchantId);
+        if (!$merchant) {
+            return response()->json(['success' => false, 'message' => 'Merchant not found.'], 404);
+        }
+        return response()->json(['success' => true, 'status' => $merchant->status]);
+    }
+
+    // Route::get('merchant/remittance-payments', [ApiMerchant::class, 'remittancePayments']);
 
 //   public function inovicedetails($id){
 

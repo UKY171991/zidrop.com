@@ -190,6 +190,71 @@ class AgentController extends Controller
             return response()->json(['error' => false, 'message' => 'Invalid slug.']);
         }
     }
+
+    public function pickupupdate(Request $request)
+    {
+        $agentsettings = \App\Agent::where('id', Session::get('agentId'))->first() ?? null;
+            $updatedParcels = 0; // Counter for updated parcels
+            $parcelIds = explode(',', $request->pu_parcel_id);
+            foreach ($parcelIds as $value) {
+                $parcel = Parcel::find($value);
+
+                if ($parcel) {
+                    $parcel->status     = 12;
+                    $parcel->agentId     = $request->agentId;
+                    $parcel->updated_at = Carbon::now();
+                    $parcel->save();
+
+                    // Create Parcelnote
+                    $note           = new Parcelnote();
+                    $note->parcelId = $value;
+                    $note->note     = "PARCEL HAS BEEN PICKED UP FROM DROP-OFF POINT";
+                    $note->save();
+
+                    $deliverymanInfo    = Deliveryman::where(['id' => $parcel->deliverymanId])->first();
+                    $history            = new History();
+                    $history->name      = $parcel->recipientName;
+                    $history->parcel_id = $parcel->id;
+                    $history->done_by   = $agentsettings->name;
+                    $history->status    = 'PICKED UP';
+                    $history->note      = 'PARCEL HAS BEEN PICKED UP FROM DROP-OFF POINT';
+                    $history->date      = $parcel->updated_at;
+                    $history->save();
+
+                    if ($parcel->parcel_source == 'p2p') {
+                        $merchantDetails = $parcel->getMerchantOrSenderDetails();
+                        try {
+                            if (! empty($merchantDetails)) {
+                                Mail::to($merchantDetails->emailAddress)->send(new ParcelStatusUpdateEmail($merchantDetails, $parcel, $history));
+                            }
+                        } catch (\Exception $exception) {
+                            Log::info('Parcel status update mail error: ' . $exception->getMessage());
+                        }
+                    } else {
+                        try {
+                            $validMerchant = Merchant::find($parcel->merchantId);
+                            if (! empty($validMerchant)) {
+                                Mail::to($validMerchant->emailAddress)->send(new ParcelStatusUpdateEmail($validMerchant, $parcel, $history));
+                            }
+                        } catch (\Exception $exception) {
+                            Log::info('Parcel status update mail error: ' . $exception->getMessage());
+                        }
+                    }
+
+                    $updatedParcels++; // Increment counte
+
+                }
+            }
+            if ($updatedParcels > 0) {
+                Toastr::success('success', 'Parcel status updated successfully!');
+
+                return redirect()->back();
+
+            } else {
+                Toastr::error('Opps!', 'No parcels updated.');
+                return redirect()->back();
+            }
+    }
     public function returntomerchant(Request $request)
     {
         $agentsettings = \App\Agent::where('id', Session::get('agentId'))->first() ?? null;
@@ -377,7 +442,16 @@ class AgentController extends Controller
             ->whereNull('agentPaystatus')
             ->sum('agentAmount');
 
-        $pending          = Parcel::where(['agentId' => Session::get('agentId'), 'status' => 1])->count();
+        // $pending          = Parcel::where(['agentId' => Session::get('agentId'), 'status' => 1])->count();
+        $pending = Parcel::where('status', 1)
+    ->where(function ($q) {
+        $q->where('status', '!=', 1)
+          ->where('agentId', Session::get('agentId'))
+          ->orWhere('status', 1);
+    })
+    ->count();
+
+
         $pickup           = Parcel::where(['agentId' => Session::get('agentId'), 'status' => 12])->count();
         $intransit        = Parcel::where(['agentId' => Session::get('agentId'), 'status' => 2])->count();
         $arriveathub      = Parcel::where(['agentId' => Session::get('agentId'), 'status' => 10])->count();
@@ -563,11 +637,15 @@ class AgentController extends Controller
         $filter = $request->filter_id;
         
         if ($slug == 'all') {
-            
+
             $query = \App\Parcel::select('*')
-                ->with(['pickupcity', 'deliverycity', 'pickuptown', 'deliverytown', 'merchant', 'deliverymen', 'agent', 'parceltype'])
-                ->where('agentId', Session::get('agentId'))
-                ->orderBy('updated_at', 'DESC');
+            ->with(['pickupcity', 'deliverycity', 'pickuptown', 'deliverytown', 'merchant', 'deliverymen', 'agent', 'parceltype']);
+            
+
+            // $query = \App\Parcel::select('*')
+            //     ->with(['pickupcity', 'deliverycity', 'pickuptown', 'deliverytown', 'merchant', 'deliverymen', 'agent', 'parceltype'])
+            //     ->where('agentId', Session::get('agentId'))
+            //     ->orderBy('updated_at', 'DESC');
 
             if ($request->trackId) {
                 $query->where('trackingCode', $request->trackId);
@@ -599,15 +677,35 @@ class AgentController extends Controller
                 $query->whereIn('status', $request->UpStatusArray);
             }
 
+
+            // ✅ Finally, apply agent filter ONLY if parceltype_id != 1
+            $query->where(function ($q) {
+                $q->where('status', '!=', 1)
+                ->where('agentId', Session::get('agentId'))
+                ->orWhere('status', 1); // no agent filter if type is 1
+            });
+
+
+            $query->orderBy('updated_at', 'DESC');
+
         } else {
             $slug       = $slug;
             $parceltype = Parceltype::where('slug', $slug)->first();
-            
+
+
             $query = \App\Parcel::select('*')
-                ->with(['pickupcity', 'deliverycity', 'pickuptown', 'deliverytown', 'merchant', 'deliverymen', 'agent', 'parceltype', 'p2pParcel'])
-                ->where('agentId', Session::get('agentId'))
-                ->where('status', $parceltype->id)
-                ->orderBy('updated_at', 'DESC');
+            ->with(['pickupcity', 'deliverycity', 'pickuptown', 'deliverytown', 'merchant', 'deliverymen', 'agent', 'parceltype', 'p2pParcel'])
+            ->where('status', $parceltype->id);
+
+            if ($parceltype->id != 1) {
+                $query->where('agentId', Session::get('agentId'));
+            }
+            
+            // $query = \App\Parcel::select('*')
+            //     ->with(['pickupcity', 'deliverycity', 'pickuptown', 'deliverytown', 'merchant', 'deliverymen', 'agent', 'parceltype', 'p2pParcel'])
+            //     ->where('agentId', Session::get('agentId'))
+            //     ->where('status', $parceltype->id)
+            //     ->orderBy('updated_at', 'DESC');
                 
                 // Clean phoneNumber
                 // dd(\App\Parcel::where('agentId', Session::get('agentId'))->where('recipientPhone', '08023205058')->get());
@@ -644,6 +742,8 @@ class AgentController extends Controller
                 $endDate   = Carbon::parse($request->upendDate)->endOfDay();
                 $query->whereBetween('updated_at', [$startDate, $endDate]);
             }
+
+             $query->orderBy('updated_at', 'DESC');
             // dd(\App\Parcel::where('recipientPhone', 'like', '%05454654654%')->first());
         }
 
@@ -760,7 +860,6 @@ class AgentController extends Controller
     {
         $show_data = \App\Parcel::select('*')
             ->with(['pickupcity', 'deliverycity', 'pickuptown', 'deliverytown', 'merchant', 'deliverymen', 'agent', 'parceltype', 'p2pParcel'])
-            ->where('agentId', Session::get('agentId'))
             ->where('id', $id)
             ->first();
 
@@ -1533,8 +1632,7 @@ class AgentController extends Controller
     // }
     public function PrintSelectedItems(Request $request)
     {
-        $parcels = \App\Parcel::where('agentId', Session::get('agentId'))
-            ->whereIn('id', explode(',', $request->query('parcels'))) // Accept comma-separated values
+        $parcels = \App\Parcel::whereIn('id', explode(',', $request->query('parcels'))) // Accept comma-separated values
             ->with(['pickupcity', 'deliverycity', 'pickuptown', 'deliverytown', 'merchant', 'deliverymen', 'agent', 'parceltype', 'p2pParcel'])
             ->get();
 
@@ -1555,7 +1653,7 @@ class AgentController extends Controller
             'shrink_tables'     => 1,
         ]);
 
-        $view = 'pdf.pdf';
+        $view = 'pdf.pdf'; 
         $html = trim(view($view, ['parcels' => $parcels])->render());
         $pdf->WriteHTML($html);
 

@@ -153,6 +153,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            height: 120px;
         }
 
         .w-50 {
@@ -419,10 +420,11 @@
             </div>
         </div>
         <div class="roww borderr" style="margin-top: -2px;">
-            <div class="coll-8 p-1 content-center">
-                <div class="qrcode" style="margin: 10px; padding: 10px">
+            <div class="coll-8 p-1 content-center" style="width:100%;justify-content:space-around;">
+                <div class="qrcode" style="margin: 10px; padding: 10px;">
 
-                    <?php echo DNS1D::getBarcodeSVG($show_data->trackingCode, 'C128', 1.4, 50, 'black', false); ?>
+                    <!-- <?php echo DNS1D::getBarcodeSVG($show_data->trackingCode, 'C128', 1.4, 50, 'black', false); ?> -->
+                    <?php echo DNS2D::getBarcodeSVG($show_data->trackingCode, 'QRCODE', 5, 5); ?>
 
                 </div>
 
@@ -437,18 +439,18 @@
                             $AmountDue = $show_data->deliveryCharge + $show_data->insurance + $show_data->tax;
                         }
                     @endphp
-                    <h1 class="uppercase text-red amontDue">Amount Due: ₦{{ number_format($AmountDue, 2) }}
+                    <h1 class="uppercase text-red amontDue" style="font-size: 30px !important;font-weight:1000 !important">Amount Due: ₦{{ number_format($AmountDue, 2) }}
                     </h1>
                 @else
                     @php $cod = $show_data->cod > 0 ? $show_data->cod : "00.00" @endphp
-                    <h1 class="uppercase text-red amontDue">Amount Due: ₦{{ number_format($cod, 2) }}</h1>
+                    <h1 class="uppercase text-red amontDue" style="font-size: 30px !important;font-weight:1000 !important">Amount Due: ₦{{ number_format($cod, 2) }}</h1>
                 @endif
 
                    
                     
                 </div>
             </div>
-            <div class=" borderr-left">
+            <!-- <div class=" borderr-left">
                 <table>
                     <tr>
                         @php $marchentAmount = (($show_data->deliveryCharge + $show_data->codCharge + $show_data->tax + $show_data->insurance) - $show_data->cod) * (-1);  @endphp
@@ -490,7 +492,7 @@
                     @endif
                 </table>
 
-            </div>
+            </div> -->
         </div>
         <div class="roww borderr mt-1 p-1 pb-2">
             <div class="coll-4">

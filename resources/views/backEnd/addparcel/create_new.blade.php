@@ -454,8 +454,8 @@
                                         <!-- row end -->
                                         <div class="row">
                                             <div class="col-sm-12">
-                                                <p class="text-center unbold">Note : <span class="">If you request
-                                                        for pick up after 5pm, it will be collected on the next day</span>
+                                                <p class="text-end unbold">
+                                                  <strong>Note:</strong> <span>Pickup requests made after <strong>9:00 AM</strong> will be scheduled for collection the next day.</span>
                                                 </p>
                                             </div>
                                         </div>

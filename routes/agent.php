@@ -18,7 +18,7 @@ use App\Http\Controllers\Superadmin\SettingsController;
 
 
 
-
+ 
 
 Route::group(['namespace' => 'FrontEnd', 'middleware' => ['agentauth']], function () {
     Route::any('/agent/selected-item-invoice', 'AgentController@PrintSelectedItems')->name('agent.parcel.PrintSelectedItems');
@@ -87,6 +87,7 @@ Route::group(['namespace' => 'FrontEnd', 'middleware' => ['agentauth']], functio
 Route::group(['as' => 'agent','prefix' => 'agent', 'middleware' => ['agentauth']], function () {
     Route::resource('/expense', ExpenseFrontController::class);
     Route::post('/parcel/status-sigle-update', [AgentController::class, 'singlestatusupdate'])->name('parcel.singlestatusupdate');
+    Route::post('/parcel/pickup-update', [AgentController::class, 'pickupupdate'])->name('parcel.singlestatusupdate');
     Route::post('/parcel/return-to-merchant-update', [AgentController::class, 'returntomerchant'])->name('parcel.returntomerchant');
     Route::get('/get_parcel_history/{id}', function ($id) {
         $histories = App\History::where('parcel_id', $id)->get();

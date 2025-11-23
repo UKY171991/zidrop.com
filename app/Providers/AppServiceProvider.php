@@ -44,92 +44,16 @@ class AppServiceProvider extends ServiceProvider
      * Bootstrap any application services.
      *
      * @return void
-     */    public function boot()
+     */
+    public function boot()
     {
         Schema::defaultStringLength(191);
         Validator::extend('recaptcha', 'App\\Validators\\ReCaptcha@validate');
 
-        // Only load view data if not in console or if tables exist
-        if (!app()->runningInConsole() || $this->tablesExist()) {
-            $this->loadViewData();
-        } else {
-            $this->loadDefaultViewData();
-        }
-    }    /**
-     * Check if database tables exist
-     */
-    private function tablesExist()
-    {
-        try {
-            // Check for multiple tables to ensure database is properly set up
-            \DB::table('settings')->exists();
-            \DB::table('notes')->exists();
-            return true;
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
-
-    /**
-     * Load default view data when database is not available
-     */
-    private function loadDefaultViewData()
-    {
-        view()->share('PublicExpenseTypes', collect());
-        view()->share('PubliclastExpNUmber', 1);
-        view()->share('websettings', null);
-        view()->share('merchants', collect());
-        view()->share('wcities', collect());
-        view()->share('wtowns', collect());
-        view()->share('webStatisticsDetails', (object) [
-            'total_delivery' => 0,
-            'total_customers' => 0,
-            'total_years' => 0,
-            'total_member' => 0
-        ]);
-        view()->share('wchargeTarifs', collect());
-        view()->share('contact_info', null);
-        view()->share('merchantNotice', null);
-        view()->share('agentNotice', null);
-        view()->share('whitelogo', collect());
-        view()->share('darklogo', collect());
-        view()->share('faveicon', collect());
-        view()->share('services', collect());
-        view()->share('newparcel', collect());
-        view()->share('processingparcel', collect());
-        view()->share('onthewayparcel', collect());
-        view()->share('deliverdparcel', collect());
-        view()->share('cancelledparcel', collect());
-        view()->share('returnprocessing', collect());
-        view()->share('returnparcel', collect());
-        view()->share('agents', collect());
-        view()->share('deliverymen', collect());
-        view()->share('newpickup', collect());
-        view()->share('pendingpickup', collect());
-        view()->share('acceptedpickup', collect());
-        view()->share('cancelledpickup', collect());
-        view()->share('deliverycharge', collect());
-        view()->share('totalamounts', 0);
-        view()->share('merchantsdue', 0);
-        view()->share('merchantspaid', 0);
-        view()->share('todaymerchantspaid', 0);
-        view()->share('deliverycharges', 0);
-        view()->share('codecharges', 0);
-        view()->share('districts', collect());
-        view()->share('socialmedia', collect());
-        view()->share('areas', collect());
-        view()->share('parceltypes', collect());
-        view()->share('allnotelist', collect());
-    }
-
-    /**
-     * Load actual view data from database
-     */    private function loadViewData()
-    {
         $ExpenseTypes = ExpenseType::where('status',1)->get();
         view()->share('PublicExpenseTypes',$ExpenseTypes);
 
-        $lastExpNumber = Expense::orderBy('id', 'desc')->pluck('expense_number')->first();
+		$lastExpNumber = Expense::orderBy('id', 'desc')->pluck('expense_number')->first();
 
         if ($lastExpNumber === null) {
             // If there are no existing expense numbers, start from 1
@@ -152,18 +76,10 @@ class AppServiceProvider extends ServiceProvider
 
         $wcities = City::where('status',1)->orderBy('title','ASC')->get();
         view()->share('wcities',$wcities);
-          $wtowns = Town::where('status',1)->get();
+
+        $wtowns = Town::where('status',1)->get();
         view()->share('wtowns',$wtowns);
-        
         $webStatisticsDetails = StatisticsDetails::where('is_active',1)->first();
-        if (!$webStatisticsDetails) {
-            $webStatisticsDetails = (object) [
-                'total_delivery' => 0,
-                'total_customers' => 0,
-                'total_years' => 0,
-                'total_member' => 0
-            ];
-        }
         view()->share('webStatisticsDetails',$webStatisticsDetails);
 
         $wchargeTarifs = ChargeTarif::where('status',1)->with('pickupcity','deliverycity')->get();
@@ -269,7 +185,9 @@ class AppServiceProvider extends ServiceProvider
         $merchantsdue = Parcel::whereIn('status', [4, 6])
         ->sum('merchantDue');
 
-        view()->share('merchantsdue',$merchantsdue);        $merchantspaid=Parcel::sum('merchantPaid');
+        view()->share('merchantsdue',$merchantsdue);
+
+        $merchantspaid=Parcel::sum('merchantPaid');
         view()->share('merchantspaid',$merchantspaid);
        $todaymerchantspaid=Parcel::where('merchantpayStatus',1)->whereDate('updated_at', Carbon::today())->sum('merchantPaid');
         view()->share('todaymerchantspaid',$todaymerchantspaid);

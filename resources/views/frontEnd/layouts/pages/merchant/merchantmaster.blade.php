@@ -185,6 +185,12 @@
                             </a>
                         </li>
                         <li>
+                            <a href="{{ url('/merchant/parcel/bulk-upload') }}">
+                                <i class="fas fa-upload"></i>
+                                Bulk Upload
+                            </a>
+                        </li>
+                        <li>
                             <a href="{{ url('merchant/parcels ') }}">
                                 <i class="fas fa-box"></i>
                                 All Shipment

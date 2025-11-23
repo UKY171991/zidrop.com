@@ -521,6 +521,10 @@ Route::group(['as' => 'author.', 'prefix' => 'author', 'namespace' => 'Author', 
     Route::post('/merchant/payment/invoice-details', 'MerchantOperationController@inovicedetails');
     Route::any('/merchant/payment/return-invoice-details', 'MerchantOperationController@returninovicedetails');
     Route::post('merchant/charge-setup', 'MerchantOperationController@chargesetup');
+    Route::any('merchant/subscription/activation/{id}','MerchantOperationController@subsplanactivation');
+    Route::any('merchant/subs/disable/{plan_id}/{merchant_id}', 'MerchantOperationController@disablesubsplan');
+
+
     
         // Department Route
     Route::get('department/add', 'DepartmentController@add');
@@ -595,3 +599,6 @@ Route::get('session/destroy', function ($sessionName) {
     return response()->json(['success' => true]);
 });
 
+Route::get('/privacy-policy', function () {
+    return view('privacy-policy');
+})->name('privacy.policy');

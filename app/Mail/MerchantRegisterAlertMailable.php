@@ -31,6 +31,8 @@ class MerchantRegisterAlertMailable extends Mailable
     public function build()
     {
         $merchant = $this->merchant;
+        // var_dump($merchant);
+        // exit();
         return $this->view('mail.merchant-registration-alert', compact('merchant'));
     }
 }
